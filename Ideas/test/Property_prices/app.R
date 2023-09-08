@@ -1,6 +1,8 @@
 library(shinydashboard)
 library(shinyWidgets)
 
+load("PropertyData.RData") #Load environment to get the necessary data
+
 ui <- dashboardPage(
   dashboardHeader(title = "Property Prices"), # Name of the dashboard
   
