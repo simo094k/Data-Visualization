@@ -79,7 +79,7 @@ head(landsdel_ejendomme_alle_aar_pct_aar_foer)
 
 landsdel_house_samlet <- dplyr::bind_rows(landsdel_ejendomme_alle_aar_indeks, landsdel_ejendomme_alle_aar_pct_kvartal_foer, landsdel_ejendomme_alle_aar_pct_aar_foer)  
 
-write.csv(x = landsdel_house_samlet, file = "landsdel_house_samlet.csv")
+write.csv(x = landsdel_house_samlet, file = "landsdel_house_samlet")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Property Prices"), # Name of the dashboard
