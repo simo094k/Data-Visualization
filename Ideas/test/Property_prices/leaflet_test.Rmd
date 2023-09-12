@@ -1,0 +1,38 @@
+---
+title: "leaflet_Tests"
+author: "Simon Hansen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(leafletDK)
+
+municipalityDK("INDHOLD", "OMRÅDE", data = folk1)
+leafletDK::rural
+
+landsdel_ejendomme_alle_aar_ny <- 
+  landsdel_ejendomme_alle_aar%>%
+  dplyr::rename("Aar" = X1, 
+                "Hele landet" = X2,
+                "Byen København" = X3,
+                "Københavns omegn"= X4,
+                "Nordsjælland" = X5,
+                "Bornholm" = X6,
+                "Østsjælland" = X7,
+                "Vest- og Sydsjælland" = X8,
+                "Fyn" = X9,
+                "Sydjylland" = X10,
+                "Østjylland" = X11,
+                "Vestjylland" = X12,
+                "Nordjylland" = X13)%>%
+  tidyr::pivot_longer(!Aar, names_to = "Landsdele", values_to = "Indeks")%>%
+  dplyr::filter(Landsdele != "Hele landet")
+
+leafletDK::ruralDK(value = "Indeks", id = "Landsdele", data = landsdel_ejendomme_alle_aar_ny%>%dplyr::filter(Aar=="2023K1"))
+```
+
