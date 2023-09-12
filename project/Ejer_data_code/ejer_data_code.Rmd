@@ -1,0 +1,82 @@
+---
+title: "ejer"
+output: html_document
+date: "2023-09-12"
+---
+
+
+```{r}
+library(readr)
+library(tidyr)
+```
+
+
+
+```{r}
+ejer_index <- readr::read_csv("../data_before_process/ejer_index.csv", 
+                              locale = locale(encoding = "ISO-8859-1"))
+ejer_kva <- readr::read_csv("../data_before_process/ejer_kva_pct.csv", 
+                            locale = locale(encoding = "ISO-8859-1"))
+ejer_year <- readr::read_csv("../data_before_process/ejer_year_pct.csv", 
+                             locale = locale(encoding = "ISO-8859-1"))
+```
+
+
+```{r}
+ejer_index <- ejer_index %>% tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")
+
+ejer_index$Metric <- "Index"
+ejer_index$Type <- "Apartment"
+
+
+ejer_kva <- ejer_kva %>% tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")
+
+ejer_kva$Metric <- "Pct_q"
+ejer_kva$Type <- "Apartment"
+
+
+ejer_year <- ejer_year %>% tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")
+
+ejer_year$Metric <- "Pct_y"
+ejer_year$Type <- "Apartment"
+```
+
+```{r}
+ejer <- rbind(ejer_index, ejer_kva, ejer_year)
+```
+
+
+```{r}
+write.csv(x = ejer, file = "../data/ejer.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
