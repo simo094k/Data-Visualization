@@ -1,0 +1,32 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-09-12"
+---
+
+
+```{r}
+library(readr)
+library(tidyr)
+```
+
+
+```{r}
+ejer <- read.csv("../data_before_process/samlet_data/ejer_samlet.csv")
+sommer <- read.csv("../data_before_process/samlet_data/sommer_samlet.csv")
+house <- read.csv("../data_before_process/samlet_data/landsdel_house_samlet.csv")
+```
+
+```{r}
+final <- rbind(ejer, sommer, house)
+final$X <- NULL
+```
+
+
+```{r}
+write.csv(x = final, file = "../data/data_without_amt_houses_sold.csv")
+```
+
+
+
+

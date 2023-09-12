@@ -45,10 +45,29 @@ ejer_year$Type <- "Apartment"
 ejer <- rbind(ejer_index, ejer_kva, ejer_year)
 ```
 
+```{r}
+write.csv(x = ejer, file = "../data_before_process/ejer_samlet.csv")
+```
+
+
 
 ```{r}
-write.csv(x = ejer, file = "../data/ejer.csv")
+sommer_index <- read.csv("../data_before_process/sommerhus_indeks.csv")
+sommer_kva <- read.csv("../data_before_process/sommerhus_pct_q.csv")
+sommer_year <- read.csv("../data_before_process/sommerhus_pct_y.csv")
 ```
+
+```{r}
+sommer <- rbind(sommer_index, sommer_kva, sommer_year)
+colnames(sommer)[colnames(sommer) == "Category"] <- "Type"
+```
+
+
+```{r}
+write.csv(x = sommer, file = "../data_before_process/samlet_data/sommer_samlet.csv")
+```
+
+
 
 
 
