@@ -8,6 +8,7 @@ date: "2023-09-12"
 ```{r}
 library(readr)
 library(tidyr)
+library(magrittr)
 ```
 
 
@@ -18,13 +19,12 @@ house <- read.csv("../data_before_process/samlet_data/landsdel_house_samlet.csv"
 ```
 
 ```{r}
-final <- rbind(ejer, sommer, house)
-final$X <- NULL
+final <- rbind(ejer, sommer, house)%>%dplyr::select(-X)
 ```
 
 
 ```{r}
-write.csv(x = final, file = "../data/data_without_amt_houses_sold.csv")
+write.csv(x = final, file = "../data/data_without_amt_houses_sold.csv", row.names=FALSE)
 ```
 
 

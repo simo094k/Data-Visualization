@@ -8,81 +8,19 @@ library(leafletDK)
 
 #load("PropertyData.RData") #Load environment to get the necessary data
 
-## Enfamiliehus
 
-landsdel_ejendomme_alle_aar_indeks <- readr::read_delim("landsdel_ejendomme_alle_aar_indeks.csv", 
-                                                 delim = ";", escape_double = FALSE, col_names = FALSE, 
-                                                 trim_ws = TRUE)%>%
-  dplyr::rename("Time" = X1, 
-                "Hele landet" = X2,
-                "Byen København" = X3,
-                "Københavns omegn"= X4,
-                "Nordsjælland" = X5,
-                "Bornholm" = X6,
-                "Østsjælland" = X7,
-                "Vest- og Sydsjælland" = X8,
-                "Fyn" = X9,
-                "Sydjylland" = X10,
-                "Østjylland" = X11,
-                "Vestjylland" = X12,
-                "Nordjylland" = X13)%>%
-  tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")%>%
-  dplyr::mutate(Metric = "Index",
-                Type = "House")
+data_without_amt_houses_sold <- readr::read_csv("data/data_without_amt_houses_sold.csv")
 
+samlet_data <- landsdel_house_samlet %>% 
+  dplyr::mutate(MetricName=dplyr::case_when(Metric == "Index" ~ "Index",
+                                            Metric == "pct_q" ~ "Change compared to the previous quarter (pct)",
+                                            Metric == "pct_y" ~ "Change compared to the same quarter of the previous year (pct)"))
 
-
-landsdel_ejendomme_alle_aar_pct_kvartal_foer <- readr::read_delim("landsdel_ejendomme_alle_aar_pct_kvartal_foer.csv", 
-                                                           delim = ";", escape_double = FALSE, col_names = FALSE, 
-                                                           locale = readr::locale(encoding = "ISO-8859-1"), 
-                                                           trim_ws = TRUE)%>%
-  dplyr::rename("Time" = X1, 
-                "Hele landet" = X2,
-                "Byen København" = X3,
-                "Københavns omegn"= X4,
-                "Nordsjælland" = X5,
-                "Bornholm" = X6,
-                "Østsjælland" = X7,
-                "Vest- og Sydsjælland" = X8,
-                "Fyn" = X9,
-                "Sydjylland" = X10,
-                "Østjylland" = X11,
-                "Vestjylland" = X12,
-                "Nordjylland" = X13)%>%
-  tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")%>%
-  dplyr::mutate(Metric = "pct_q",
-                Type = "House")
-
-
-landsdel_ejendomme_alle_aar_pct_aar_foer <- readr::read_delim("landsdel_ejendomme_alle_aar_pct_aar_foer.csv", 
-                                                       delim = ";", escape_double = FALSE, col_names = FALSE, 
-                                                       locale = readr::locale(encoding = "ISO-8859-1"), 
-                                                       trim_ws = TRUE)%>%
-  dplyr::rename("Time" = X1, 
-                "Hele landet" = X2,
-                "Byen København" = X3,
-                "Københavns omegn"= X4,
-                "Nordsjælland" = X5,
-                "Bornholm" = X6,
-                "Østsjælland" = X7,
-                "Vest- og Sydsjælland" = X8,
-                "Fyn" = X9,
-                "Sydjylland" = X10,
-                "Østjylland" = X11,
-                "Vestjylland" = X12,
-                "Nordjylland" = X13)%>%
-  tidyr::pivot_longer(!Time, names_to = "Area", values_to = "Value")%>%
-  dplyr::mutate(Metric = "pct_y",
-                Type = "House")
-
-head(landsdel_ejendomme_alle_aar_pct_aar_foer)
-
-landsdel_house_samlet <- dplyr::bind_rows(landsdel_ejendomme_alle_aar_indeks, landsdel_ejendomme_alle_aar_pct_kvartal_foer, landsdel_ejendomme_alle_aar_pct_aar_foer)  
-
-write.csv(x = landsdel_house_samlet, file = "landsdel_house_samlet")
+#write.csv(x = landsdel_house_samlet, file = "landsdel_house_samlet")
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Property Prices"), # Name of the dashboard
+  dashboardHeader(title = "Property Prices", 
+                  titleWidth = 300), # Name of the dashboard
   
   dashboardSidebar( #If we want different "tabs"/pages, it can be done inside here
     #Further, everything we want of the left pane should be in here (eg. filters).
@@ -90,24 +28,36 @@ ui <- dashboardPage(
     # sidebarMenu(
     #   menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard"))
     # ),
-    
+    shinyjs::useShinyjs(),
     br(),
     sliderTextInput( 
       inputId = "mySliderText", #The id is used to reference/connect it to some action in the server
-      label = "Year:",
-      choices = unique(landsdel_ejendomme_alle_aar$Time),
-      selected = max(unique(landsdel_ejendomme_alle_aar$Time)), #Selected as default
+      label = "Year",
+      choices = unique(samlet_data$Time),
+      selected = max(unique(samlet_data$Time)), #Selected as default
       grid = FALSE, dragRange = FALSE
-    )
+    ),
+    br(),
+    selectInput(inputId = "propType", 
+                label = "Propterty type", 
+                choices = unique(samlet_data$Type), 
+                selected = samlet_data$Type == "House" 
+    ),
+    selectInput(inputId = "metricType", 
+                label = "Metric type", 
+                choices =  rlang::set_names(unique(samlet_data$Metric), unique(samlet_data$MetricName)), 
+                selected = "pct_y" 
+    ),width = 300,collapsed = F
+    
   ),
   dashboardBody( #Inside here, we can design where and how the plots are shown!
     fluidRow(
       
       splitLayout(style = "border: 1px solid silver:", cellWidths = c("65%","35%"), 
                   leaflet::leafletOutput(
-                    outputId = "Map_choropleth", height = 1000#, width = "65%"
+                    outputId = "Map_choropleth", height = 750#, width = "65%"
                   ),
-                  plotly::plotlyOutput("plot1", height = 500) 
+                  plotly::plotlyOutput("plot1", height = 300) 
       )
       
       
@@ -137,8 +87,8 @@ server <- function(input, output) {
   #Choropleth map that depends on the users input in the slider (to define what year to use)
   #browser() # This is used to debug and "step into" function calls
   dfInput <- reactive({
-    landsdel_ejendomme_alle_aar%>%
-      dplyr::filter(Area != "Hele landet" & Time==input$mySliderText)
+    samlet_data%>%
+      dplyr::filter(Area != "Hele landet" & Time==input$mySliderText & Type == input$propType & Metric == input$metricType)
   })
   
   output$Map_choropleth <- leaflet::renderLeaflet({
@@ -146,7 +96,7 @@ server <- function(input, output) {
     data <- dfInput()
     # pal <- leaflet::colorNumeric(
     #   palette = "Blues",
-    #   domain = landsdel_ejendomme_alle_aar%>%
+    #   domain = samlet_data%>%
     #                    dplyr::filter(Area != "Hele landet")%>%dplyr::select(Value)
     # )
 
@@ -193,8 +143,9 @@ server <- function(input, output) {
   
   # Histogram to test the interactivity of the users slider on the histogram
   df_linechart <- reactive({
-    landsdel_ejendomme_alle_aar%>%
-      dplyr::filter(Area =="Hele landet")%>%
+    
+    samlet_data%>%
+      dplyr::filter(Area =="Hele landet" & Metric == input$metricType)%>%
       dplyr::mutate(Aar1 = Time)%>%
       tidyr::separate(Time, into = c("Year", "Quarter"), sep = "K")%>%
       dplyr::mutate(Quarter = as.numeric(Quarter),
@@ -207,9 +158,12 @@ server <- function(input, output) {
                                      mapping = aes(x = Date, y = Value, color = Area#, text = paste0("Date: ", Aar1)
                                                    ))+
       geom_line(size=1.5) +
+        ggplot2::ggtitle(unique(data$MetricName)) +
       ggplot2::scale_colour_manual(values = "#6495ed") + 
         ggthemes::theme_hc()+
-        theme(legend.position="none"))
+        theme(legend.position="none", 
+              axis.text.x=element_blank(),
+              axis.text.y=element_blank()))
   })
   
   
