@@ -13,13 +13,13 @@ library(magrittr)
 
 
 ```{r}
-ejer <- read.csv("../data_before_process/samlet_data/ejer_samlet.csv")
-sommer <- read.csv("../data_before_process/samlet_data/sommer_samlet.csv")
-house <- read.csv("../data_before_process/samlet_data/landsdel_house_samlet.csv")
+ejer <- read.csv("../data_before_process/samlet_data/ejer_samlet.csv")%>%dplyr::select(-X)
+sommer <- read.csv("../data_before_process/vacationhouse_all.csv")%>%dplyr::rename(Type = Category)
+house <- read.csv("../data_before_process/samlet_data/landsdel_house_samlet.csv")%>%dplyr::select(-X)
 ```
 
 ```{r}
-final <- rbind(ejer, sommer, house)%>%dplyr::select(-X)
+final <- rbind(ejer, sommer, house)
 ```
 
 

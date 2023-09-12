@@ -11,12 +11,12 @@ library(leafletDK)
 
 data_without_amt_houses_sold <- readr::read_csv("data/data_without_amt_houses_sold.csv")
 
-samlet_data <- landsdel_house_samlet %>% 
-  dplyr::mutate(MetricName=dplyr::case_when(Metric == "Index" ~ "Index",
-                                            Metric == "pct_q" ~ "Change compared to the previous quarter (pct)",
-                                            Metric == "pct_y" ~ "Change compared to the same quarter of the previous year (pct)"))
-
-#write.csv(x = landsdel_house_samlet, file = "landsdel_house_samlet")
+samlet_data <- data_without_amt_houses_sold %>% 
+  dplyr::mutate(Metric = dplyr::case_when(Metric == "Pct_y" | Metric == "pct_y" ~ "Pct_y",
+                                           Metric == "Pct_q" | Metric == "pct_q" ~ "Pct_q", TRUE ~ Metric),
+                MetricName=dplyr::case_when(Metric == "Index" ~ "Index",
+                                            Metric == "Pct_q" ~ "Change compared to the previous quarter (pct)",
+                                            Metric == "Pct_y" ~ "Change compared to the same quarter of the previous year (pct)"))
 
 ui <- dashboardPage(
   dashboardHeader(title = "Property Prices", 
@@ -41,30 +41,56 @@ ui <- dashboardPage(
     selectInput(inputId = "propType", 
                 label = "Propterty type", 
                 choices = unique(samlet_data$Type), 
-                selected = samlet_data$Type == "House" 
+                selected = "House" 
     ),
     selectInput(inputId = "metricType", 
                 label = "Metric type", 
                 choices =  rlang::set_names(unique(samlet_data$Metric), unique(samlet_data$MetricName)), 
-                selected = "pct_y" 
+                selected = "Index" 
     ),width = 300,collapsed = F
     
   ),
   dashboardBody( #Inside here, we can design where and how the plots are shown!
     fluidRow(
-      
-      splitLayout(style = "border: 1px solid silver:", cellWidths = c("65%","35%"), 
-                  leaflet::leafletOutput(
-                    outputId = "Map_choropleth", height = 750#, width = "65%"
-                  ),
-                  plotly::plotlyOutput("plot1", height = 300) 
+      column(width = 8, 
+             fluidRow(
+               style = "height:400px; width:102.5%;",
+               leaflet::leafletOutput(
+                 outputId = "Map_choropleth", height = 750#, width = "65%"
+               )
+             )
+             
+        
+      ),
+      column(width = 4,
+             fluidRow(
+               style = "height:200px; margin-bottom:110px;",
+               plotly::plotlyOutput("linechart", height = 300)
+             ),
+             # fluidRow(
+             #   style = "height:100px;" 
+             # ),
+             
+             fluidRow(
+               style = "height:400px;",
+               plotly::plotlyOutput("histogram", height = 440)
+             )
+        
       )
+      
+      # splitLayout(style = "border: 1px solid silver:", cellWidths = c("65%","35%"), 
+      #             leaflet::leafletOutput(
+      #               outputId = "Map_choropleth", height = 750#, width = "65%"
+      #             ),
+      #             splitLayout(
+      #             plotly::plotlyOutput("linechart", height = 300), plotly::plotlyOutput("histogram", height = 300), ellArgs = list(style = "horizontal-align: bottom") )
+      # )
       
       
       # box(leaflet::leafletOutput(
       #   outputId = "Map_choropleth", height = 500, width = "65%"
       # ),width = "75%"),
-      # box(plotOutput(outputId = "plot2"), height = 500, width = "35%")
+      # box(plotOutput(outputId = "histogram"), height = 500, width = "35%")
     )
     # ,
     # fluidRow(
@@ -88,8 +114,34 @@ server <- function(input, output) {
   #browser() # This is used to debug and "step into" function calls
   dfInput <- reactive({
     samlet_data%>%
-      dplyr::filter(Area != "Hele landet" & Time==input$mySliderText & Type == input$propType & Metric == input$metricType)
+      dplyr::filter(Area != "Hele landet" 
+                    & Time==input$mySliderText 
+                    & Type == input$propType 
+                    & Metric == input$metricType)
   })
+  
+  library(htmlwidgets)
+  library(htmltools)
+  
+  tag.map.title <- tags$style(HTML("
+  .leaflet-control.map-title { 
+    transform: translate(-50%,20%);
+    position: fixed !important;
+    left: 35%;
+    text-align: center;
+    padding-left: 10px; 
+    padding-right: 10px; 
+    background: rgba(255,255,255,0.75);
+    font-weight: bold;
+    font-size: 28px;
+  }
+"))
+  
+  title <- tags$div(
+    tag.map.title, HTML("This is a title for the map")
+  )
+  
+  
   
   output$Map_choropleth <- leaflet::renderLeaflet({
     #browser()
@@ -109,7 +161,12 @@ server <- function(input, output) {
                        pal = "Blues", 
                        logcol = T
                       )%>%
-      leaflet.extras::setMapWidgetStyle(list(background = "white"))
+      leaflet.extras::setMapWidgetStyle(list(background = "white"))%>%
+        setView(lat = 56.606422, lng = 11.947966, zoom = 7.15)%>%
+        addControl(title, position = "topleft", className="map-title")
+       
+      
+      
       # %>%
       #   leaflet::addLegend(
       #     position = 'bottomleft',
@@ -145,14 +202,16 @@ server <- function(input, output) {
   df_linechart <- reactive({
     
     samlet_data%>%
-      dplyr::filter(Area =="Hele landet" & Metric == input$metricType)%>%
+      dplyr::filter(Area =="Hele landet" 
+                    & Metric == input$metricType 
+                    & Type == input$propType)%>%
       dplyr::mutate(Aar1 = Time)%>%
       tidyr::separate(Time, into = c("Year", "Quarter"), sep = "K")%>%
       dplyr::mutate(Quarter = as.numeric(Quarter),
                     Date = lubridate::ymd(paste0(Year, "-01-01")) + months(3) * (Quarter - 1))
   })
   
-  output$plot1 <- plotly::renderPlotly({
+  output$linechart <- plotly::renderPlotly({
     data <- df_linechart()
     plotly::ggplotly(ggplot2::ggplot(data = data, 
                                      mapping = aes(x = Date, y = Value, color = Area#, text = paste0("Date: ", Aar1)
@@ -166,7 +225,19 @@ server <- function(input, output) {
               axis.text.y=element_blank()))
   })
   
-  
+  output$histogram <- plotly::renderPlotly({
+    data <- df_linechart()
+    plotly::ggplotly(ggplot2::ggplot(data = data, 
+                                     mapping = aes(x = Date, y = Value, color = Area#, text = paste0("Date: ", Aar1)
+                                     ))+
+                       geom_line(size=1.5) +
+                       ggplot2::ggtitle(unique(data$MetricName)) +
+                       ggplot2::scale_colour_manual(values = "#6495ed") + 
+                       ggthemes::theme_hc()+
+                       theme(legend.position="none", 
+                             axis.text.x=element_blank(),
+                             axis.text.y=element_blank()))
+  })
   
   # output$text <- renderPrint({
   #   data <- dfInput()
