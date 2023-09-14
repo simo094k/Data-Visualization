@@ -31,7 +31,7 @@ ui <- dashboardPage(
     shinyjs::useShinyjs(),
     br(),
     sliderTextInput( 
-      inputId = "mySliderText", #The id is used to reference/connect it to some action in the server
+      inputId = "time", #The id is used to reference/connect it to some action in the server
       label = "Year",
       choices = unique(samlet_data$Time),
       selected = max(unique(samlet_data$Time)), #Selected as default
@@ -54,9 +54,9 @@ ui <- dashboardPage(
     fluidRow(
       column(width = 8, 
              fluidRow(
-               style = "height:400px; width:102.5%;",
+               style = "height:100vh; width:102.5%;",
                leaflet::leafletOutput(
-                 outputId = "Map_choropleth", height = 750#, width = "65%"
+                 outputId = "Map_choropleth", height = 770#, width = "65%"
                )
              )
              
@@ -73,7 +73,7 @@ ui <- dashboardPage(
              
              fluidRow(
                style = "height:400px;",
-               plotly::plotlyOutput("histogram", height = 440)
+               plotly::plotlyOutput("barchart", height = 460)
              )
         
       )
@@ -83,14 +83,14 @@ ui <- dashboardPage(
       #               outputId = "Map_choropleth", height = 750#, width = "65%"
       #             ),
       #             splitLayout(
-      #             plotly::plotlyOutput("linechart", height = 300), plotly::plotlyOutput("histogram", height = 300), ellArgs = list(style = "horizontal-align: bottom") )
+      #             plotly::plotlyOutput("linechart", height = 300), plotly::plotlyOutput("barchart", height = 300), ellArgs = list(style = "horizontal-align: bottom") )
       # )
       
       
       # box(leaflet::leafletOutput(
       #   outputId = "Map_choropleth", height = 500, width = "65%"
       # ),width = "75%"),
-      # box(plotOutput(outputId = "histogram"), height = 500, width = "35%")
+      # box(plotOutput(outputId = "barchart"), height = 500, width = "35%")
     )
     # ,
     # fluidRow(
@@ -115,7 +115,7 @@ server <- function(input, output) {
   dfInput <- reactive({
     samlet_data%>%
       dplyr::filter(Area != "Hele landet" 
-                    & Time==input$mySliderText 
+                    & Time==input$time 
                     & Type == input$propType 
                     & Metric == input$metricType)
   })
@@ -198,7 +198,7 @@ server <- function(input, output) {
   
   
   
-  # Histogram to test the interactivity of the users slider on the histogram
+  # barchart to test the interactivity of the users slider on the barchart
   df_linechart <- reactive({
     
     samlet_data%>%
@@ -225,18 +225,36 @@ server <- function(input, output) {
               axis.text.y=element_blank()))
   })
   
-  output$histogram <- plotly::renderPlotly({
-    data <- df_linechart()
-    plotly::ggplotly(ggplot2::ggplot(data = data, 
-                                     mapping = aes(x = Date, y = Value, color = Area#, text = paste0("Date: ", Aar1)
+  
+  df_barchart <- reactive({
+    samlet_data%>%
+      dplyr::filter(Area !="Hele landet" 
+                    & Metric == input$metricType 
+                    & Type == input$propType
+                    & Time == input$time)
+  })
+  
+  output$barchart <- plotly::renderPlotly({
+    data <- df_barchart()
+    
+    plotly::ggplotly(ggplot2::ggplot(data =data, 
+                                     mapping = aes(x = forcats::fct_reorder(Area, Value), y = Value, text = paste0(Area, "\n", Time, ": ", Value)
                                      ))+
-                       geom_line(size=1.5) +
-                       ggplot2::ggtitle(unique(data$MetricName)) +
-                       ggplot2::scale_colour_manual(values = "#6495ed") + 
-                       ggthemes::theme_hc()+
-                       theme(legend.position="none", 
-                             axis.text.x=element_blank(),
-                             axis.text.y=element_blank()))
+                       geom_bar(stat="identity", fill="#6495ed", alpha=.6) +
+                       coord_flip()+
+                       scale_x_discrete(name ="",  position = "top")+
+                       ggplot2::ggtitle(unique(data$MetricName), "tets") +
+                       # scale_y_continuous(name = "Value",
+                       #                    breaks = seq(0, -max(data$Value)*1.10, by=-25),  # y axis values (before coord_flip) 
+                       #                    labels = seq(0, max(data$Value)*1.10, by=25))+  # show non-negative values
+                      # xlab("") +
+                       #ggplot2::scale_colour_manual(values = "#6495ed") + 
+                       ggthemes::theme_hc()
+                       # theme(legend.position="none",
+                       #       axis.text.x=element_blank(),
+                       #       axis.text.y=element_blank())
+                     ,tooltip = "text", 
+                     )
   })
   
   # output$text <- renderPrint({
