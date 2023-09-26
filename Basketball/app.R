@@ -73,7 +73,7 @@ ui <- dashboardPage(
              
              fluidRow(
                style = "height:400px;",
-               plotly::plotlyOutput("barchart", height = 460)
+               plotly::plotlyOutput("barchart", height = 40)
              )
         
       )
