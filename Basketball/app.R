@@ -1,114 +1,107 @@
 library(shinydashboard)
 library(shinyWidgets)
-#library(plotly)
+library(plotly)
 library(ggplot2)
 library(magrittr)
-library(leaflet)
-library(leafletDK)
 
-#load("PropertyData.RData") #Load environment to get the necessary data
+load("data/basketball.RData") #Load environment to get the necessary data
 
-
-data_without_amt_houses_sold <- readr::read_csv("data/data_without_amt_houses_sold.csv")
-
-samlet_data <- data_without_amt_houses_sold %>% 
-  dplyr::mutate(Metric = dplyr::case_when(Metric == "Pct_y" | Metric == "pct_y" ~ "Pct_y",
-                                           Metric == "Pct_q" | Metric == "pct_q" ~ "Pct_q", TRUE ~ Metric),
-                MetricName=dplyr::case_when(Metric == "Index" ~ "Index",
-                                            Metric == "Pct_q" ~ "Change compared to the previous quarter (pct)",
-                                            Metric == "Pct_y" ~ "Change compared to the same quarter of the previous year (pct)"))
-
-ui <- dashboardPage(
-  dashboardHeader(title = "Property Prices", 
-                  titleWidth = 300), # Name of the dashboard
   
-  dashboardSidebar( #If we want different "tabs"/pages, it can be done inside here
-    #Further, everything we want of the left pane should be in here (eg. filters).
-    
-    # sidebarMenu(
-    #   menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard"))
-    # ),
-    shinyjs::useShinyjs(),
-    br(),
-    sliderTextInput( 
-      inputId = "time", #The id is used to reference/connect it to some action in the server
-      label = "Year",
-      choices = unique(samlet_data$Time),
-      selected = max(unique(samlet_data$Time)), #Selected as default
-      grid = FALSE, dragRange = FALSE
-    ),
-    br(),
-    selectInput(inputId = "propType", 
-                label = "Propterty type", 
-                choices = unique(samlet_data$Type), 
-                selected = "House" 
-    ),
-    selectInput(inputId = "metricType", 
-                label = "Metric type", 
-                choices =  rlang::set_names(unique(samlet_data$Metric), unique(samlet_data$MetricName)), 
-                selected = "Index" 
-    ),width = 300,collapsed = F
-    
-  ),
-  dashboardBody( #Inside here, we can design where and how the plots are shown!
-    fluidRow(
-      column(width = 8, 
-             fluidRow(
-               style = "height:100vh; width:102.5%;",
-               leaflet::leafletOutput(
-                 outputId = "Map_choropleth", height = 770#, width = "65%"
-               )
-             )
-             
-        
-      ),
-      column(width = 4,
-             fluidRow(
-               style = "height:200px; margin-bottom:110px;",
-               plotly::plotlyOutput("linechart", height = 300)
-             ),
-             # fluidRow(
-             #   style = "height:100px;" 
-             # ),
-             
-             fluidRow(
-               style = "height:400px;",
-               plotly::plotlyOutput("barchart", height = 40)
-             )
-        
-      )
-      
-      # splitLayout(style = "border: 1px solid silver:", cellWidths = c("65%","35%"), 
-      #             leaflet::leafletOutput(
-      #               outputId = "Map_choropleth", height = 750#, width = "65%"
-      #             ),
-      #             splitLayout(
-      #             plotly::plotlyOutput("linechart", height = 300), plotly::plotlyOutput("barchart", height = 300), ellArgs = list(style = "horizontal-align: bottom") )
-      # )
-      
-      
-      # box(leaflet::leafletOutput(
-      #   outputId = "Map_choropleth", height = 500, width = "65%"
-      # ),width = "75%"),
-      # box(plotOutput(outputId = "barchart"), height = 500, width = "35%")
-    )
-    # ,
-    # fluidRow(
-    #   box(
-    #     title = "Controls",
-    #     sliderInput(inputId = "slider", label = "Number of observations:", min = 1, max = 100, value = 50)
-    #   ),
-    #   verbatimTextOutput("text")
-    # )
-  )
-)
 
+
+ui <- fluidPage(
+  tags$style(HTML("
+          .navbar .navbar-header {float: left; width:15% }
+          .navbar .navbar-nav {float: left; }
+          .container {min-width: 1250px}
+        ")
+  ),
+  shinyjs::useShinyjs(),
+  navbarPage(title = tagList(("Basketball"),
+                             actionLink(inputId = "sidebar_button",
+                                        label = NULL,
+                                        icon = icon("bars"))), 
+             theme=shinythemes::shinytheme("flatly"),
+             # tags$head(tags$style(HTML('
+             #                /* HEADER */
+             #                .nav>li>a {
+             #                padding: 1vh 8vw;;
+             #                }'
+             # ))),
+             
+  tabPanel(title = "Player",
+           sidebarLayout(
+             div(class="sidebar",
+             sidebarPanel(
+               htmlOutput("players", width = 50, height = 50),
+               selectInput(inputId = "selectplayer", 
+                           choices = all_nba_data %>% 
+                             dplyr::filter(!is.na(pictures)) %>% 
+                             select(Player=player)%>%unique()%>%arrange(Player), 
+                           selected = "LeBron James", 
+                           label = "", 
+                           selectize = T),
+               br(),
+               h5("Filters"),
+               
+                 sliderTextInput(
+                   inputId = "time", #The id is used to reference/connect it to some action in the server
+                   label = "Year",
+                   choices = c(1, 2, 3),
+                   selected = 2, #Selected as default
+                   grid = FALSE, dragRange = FALSE
+                 ), width = 2
+               
+             )),
+             mainPanel(h2("Indhold for players"))
+           )),
+  
+  
+  tabPanel(title = "Team",
+           sidebarLayout(
+             div(class="sidebar",
+                 sidebarPanel(
+                   h4("Filters"),
+                   htmlOutput("picture1", width = 50, height=50),
+                  
+                   sliderTextInput(
+                     inputId = "time", #The id is used to reference/connect it to some action in the server
+                     label = "Year",
+                     choices = c(1, 2, 3, 4),
+                     selected = 2, #Selected as default
+                     grid = FALSE, dragRange = FALSE
+                   ), width = 2
+                   
+                 )),
+             mainPanel(h2("Indhold for Team"))
+           ))
+  
+  ))
+  
+  
 server <- function(input, output) {
   #In the server, the fun happens. Here, we define what is actually shown.
   # It is a very good idea to keep it as structured as possible, and if the code
   # for each plot becomes to large, one can consider to place it in a seperate
   # file and refer to that file here instead.
   
+  
+  observeEvent(input$sidebar_button,{
+    shinyjs::toggle(selector = ".sidebar")
+  })
+  
+  src <- reactive({
+    #browser()
+    src <- all_nba_data %>% 
+      dplyr::filter(!is.na(pictures)) %>% dplyr::select(player, pictures)%>%
+      dplyr::filter(player == input$selectplayer)%>%dplyr::group_by(player)%>%unique()
+    img <- c('<img src="',src$pictures,'"width="100%", height="250px">')
+  })
+  
+ # browser()
+  
+  
+  output$players<-renderText({ src()})
   
   #Choropleth map that depends on the users input in the slider (to define what year to use)
   #browser() # This is used to debug and "step into" function calls
