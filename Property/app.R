@@ -164,7 +164,16 @@ server <- function(input, output) {
       leaflet.extras::setMapWidgetStyle(list(background = "white"))%>%
         setView(lat = 56.606422, lng = 11.947966, zoom = 7.15)%>%
         addControl(title, position = "topleft", className="map-title")
-       
+      
+      
+      # Add the GeoJSON layer for Jylland
+      
+      #m <- addGeoJSON(m, data = "jylland.geojson")
+      
+      # Define a reactive variable to track clicks
+      
+      
+      # click_data <- reactiveValues(clicked = FALSE)
       
       
       # %>%
@@ -196,6 +205,25 @@ server <- function(input, output) {
     #   )
   })
   
+  #observeEvent(input$Map_choropleth_click, { # update the location selectInput on map clicks
+  #  p <- input$Map_choropleth_click
+  #  print(p)
+  #  print("niblle")
+  #})
+  #print("jo")
+  
+  observeEvent(input$Map_choropleth_shape_click, {
+    event <- input$Map_choropleth_shape_click
+    print(event)
+    print("no")
+    print(event$id)
+    #if (event$id == "jylland") {
+    #  click_data$clicked <- !click_data$clicked
+    #  # Toggle the fill color of the Jylland layer between red and default
+    #  fillColor <- if (click_data$clicked) "red" else "default"
+    #  #updateShapeStyle(m, layerId = "jylland", fillColor = fillColor)
+    #}
+  })
   
   
   # barchart to test the interactivity of the users slider on the barchart
