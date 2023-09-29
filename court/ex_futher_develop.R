@@ -2,9 +2,11 @@ library(shiny)
 library(plotly)
 library(tidyverse)
 
-data_path <- "C:/Users/Marc/OneDrive - Aarhus universitet/dataviz/Material_idea_generation/all_nba_data.csv"
-df <- read.csv(data_path)
-df2 <- df %>% select(c("player", "shotX", "shotY", "date", "shot_type", "distance", "made"))
+#data_path <- "C:/Users/Marc/OneDrive - Aarhus universitet/dataviz/Material_idea_generation/all_nba_data.csv"
+#df <- read.csv(data_path)
+#df2 <- df %>% select(c("player", "shotX", "shotY", "date", "shot_type", "distance", "made"))
+
+df2 <- all_nba_data
 
 ui <- fluidPage(
   titlePanel("Interactive Dashboard"),
