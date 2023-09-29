@@ -160,15 +160,16 @@ server <- function(input, output, session) {
   
   
   df_players <- reactive({
-    df_player <- all_nba_data %>%
+    all_nba_data %>%
       dplyr::filter(player == input$selectPlayer)  # Bogdan Bogdanović
   })
 
-  df_player <- df_players()
+  
 
 
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
+    df_player <- df_players()
     plot_ly(df_player, x = ~shotX, y = ~shotY, color = ~made_factor,
             type = "scatter", mode = "markers", source = "scatter_selected",
             customdata = ~made_factor) %>%
@@ -179,8 +180,9 @@ server <- function(input, output, session) {
 
   # Create the bar chart
   output$bar_chart <- renderPlotly({
+    df_player <- df_players()
     plot_ly(df_player, x = ~distance, color = ~made_factor, type = "histogram",
-            source = "bar_selected", barmode = "stack",
+            source = "bar_selected", 
             yaxis = list(title = 'Count'), customdata = ~made_factor) %>%
       layout(
         clickmode = "event+select"
@@ -189,6 +191,7 @@ server <- function(input, output, session) {
 
   # Capture selected data from the scatterplot
   scatter_selected_data <- reactive({
+    df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
     trace <- unique(selected_data$customdata)
 
@@ -203,6 +206,7 @@ server <- function(input, output, session) {
   })
 
   bar_selected_data <- reactive({
+    df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "bar_selected")
     if (!is.null(selected_data)) {
       min_dist = min(selected_data$x)
@@ -235,7 +239,7 @@ server <- function(input, output, session) {
     if (!is.null(scatter_selected_data())) {
       output$bar_chart <- renderPlotly({
         plot_ly(selected_data, x = ~distance, color = ~made_factor,
-                type = "histogram", source = "bar_selected", barmode = "stack",
+                type = "histogram", source = "bar_selected",
                 yaxis = list(title = 'Count')) %>%
           layout(
             clickmode = "event+select"
