@@ -11,10 +11,11 @@ all_nba_data <- read_csv("data/all_nba_data.csv") %>%
   group_by(player)%>%mutate(num = n())
 
 player_df <- all_nba_data %>% 
-  dplyr::filter(num>=600) %>% 
+  #dplyr::filter(num>=600) %>% 
+  filter(is.na(pictures))%>%
   select(player) %>% 
   unique() %>% 
-  mutate(url = paste0("https://en.wikipedia.org/wiki/",sub(" ", "_", player)))
+  mutate(url = paste0("https://en.wikipedia.org/wiki/",gsub(" ", "_", player)))
 
 results = data.frame()
 
@@ -49,8 +50,17 @@ for(i in 1:length(player_df$player)){
   }, error = function(e){cat("ERROR :", player_df$player[i], "\n")})
 }
 
-colnames(results)[which(names(results) == "names")] <- "player"
 
 all_nba_data <- dplyr::left_join(x = all_nba_data, y = results, by="player")
 
 write.csv(x = all_nba_data, file = "all_nba_data_v2.csv")
+
+
+
+all_nba_data<-all_nba_data%>%mutate(pictures = case_when(!is.na(pictures.x) ~ pictures.x, T~pictures.y),
+                      position = case_when(!is.na(position.x) ~ position.x, T~position.y),
+                      bday = case_when(!is.na(bday.x) ~ as.character(bday.x), T~bday.y),
+                      height = case_when(!is.na(height.x) ~ height.x, T~height.y),
+                      weight = case_when(!is.na(weight.x) ~ weight.x, T~weight.y))%>%
+  select(-c(pictures.x,pictures.y,  position.x, position.y, bday.x, bday.y, height.x, height.y, weight.x, weight.y))
+
