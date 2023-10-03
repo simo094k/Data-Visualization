@@ -5,12 +5,13 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 
+#Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
 
 
-all_nba_data <- all_nba_data%>%
-  dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
-                made_factor = as.factor(ifelse(made == T, "Made", "Not made")))
+# all_nba_data <- all_nba_data%>%
+#   dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+#                 made_factor = as.factor(ifelse(made == T, "Made", "Not made")))
 
 
 ui <- fluidPage(
@@ -34,7 +35,7 @@ ui <- fluidPage(
                htmlOutput("players", width = 50, height = 50),
                selectInput(inputId = "selectPlayer", 
                            choices = all_nba_data %>% 
-                             dplyr::filter(!is.na(pictures)) %>% 
+                             dplyr::filter(!is.na(pictures) & num>=600) %>% 
                              select(Player=player)%>%unique()%>%
                              arrange(Player), 
                            selected = "LeBron James", 
@@ -93,19 +94,94 @@ ui <- fluidPage(
            sidebarLayout(
              div(class="sidebar",
                  sidebarPanel(
-                   h4("Filters"),
-                   htmlOutput("picture1", width = 50, height=50),
-                  
-                   sliderTextInput(
-                     inputId = "time", #The id is used to reference/connect it to some action in the server
-                     label = "Year",
-                     choices = c(1, 2, 3, 4),
-                     selected = 2, #Selected as default
-                     grid = FALSE, dragRange = FALSE
+                   htmlOutput("team", width = 50, height = 50),
+                   selectInput(inputId = "selectTeam", 
+                               choices = all_nba_data %>% 
+                                 dplyr::filter(!is.na(pictures_team)) %>% 
+                                 select("Team name" = team_name)%>%unique()%>%
+                                 arrange("Team name"), 
+                               selected = "Boston Celtics", 
+                               label = NULL, 
+                               selectize = T),
+                   #br(),
+                   h5("Filters"),
+                   selectizeInput(inputId = "quartersTeam", 
+                                  choices = all_nba_data %>% 
+                                    dplyr::select(quarter)%>%
+                                    unique(), 
+                                  selected = "1st quarter", 
+                                  multiple = T, 
+                                  #selectize = F, 
+                                  label = "Game period"
+                   ),
+                   
+                   sliderInput(inputId = "timeRemainingTeam",
+                               min = 0.0, 
+                               max = 12.0,
+                               value = c(0,12),
+                               step = 0.5,
+                               ticks = F, 
+                               label = "Time remaining in Q (min)"),
+                   
+                   sliderInput(inputId = "distanceToRimTeam",
+                               min = 0.0,
+                               max = 39,
+                               value = c(0,39),
+                               step = 1.0,
+                               ticks = F,
+                               label = "Shot distance to basket (ft)"),
+                   
+                   selectizeInput(inputId = "gamestatusTeam", 
+                                  choices = all_nba_data %>% 
+                                    dplyr::select(status)%>%
+                                    unique(), 
+                                  selected = c("trails", "tied", "leads"), 
+                                  multiple = T, 
+                                  #selectize = F, 
+                                  label = "Game status"
+                   )
+                   
+                   
+                   
+                   , width = 2)),
+             mainPanel(
+               h2("Indhold for team"),
+               plotlyOutput("scatterplot_team"),
+               plotlyOutput("bar_chart_team"),
+               plotlyOutput("radarplot_team"))
+           )),
+  
+  
+  #LEAGUE
+  tabPanel(title = "League",
+           sidebarLayout(
+             div(class="sidebar",
+                 sidebarPanel(
+                   tags$style(".well {background-color:white;}"),
+                   htmlOutput("league", width = 50, height = 50),
+                   h5("Filters"),
+                   selectizeInput(inputId = "seasonLeague", 
+                                  choices = all_nba_data %>% 
+                                    dplyr::select(season)%>%
+                                    unique(), 
+                                  selected = c("2009/10", "2010/11", "2011/12", "2012/13", "2013/14",
+                                               "2014/15", "2015/16", "2016/17", "2017/18", "2018/19",
+                                               "2019/20", "2020/21"), 
+                                  multiple = T, 
+                                  #selectize = F, 
+                                  label = "Pick seasons"
+                   ),
+                   selectizeInput(inputId = "positionLeague", 
+                                  choices = c("Center", "Forward", "Guard"), 
+                                  selected = c("Center", "Forward", "Guard"), 
+                                  multiple = T, 
+                                  #selectize = F, 
+                                  label = "Game period"
                    )
                    
                    , width = 2)),
-             mainPanel(h2("Indhold for Team"))
+             mainPanel(
+               h2("Indhold for league"))
            ))
   
   ))
@@ -122,6 +198,9 @@ server <- function(input, output, session) {
     shinyjs::toggle(selector = ".sidebar")
   })
   
+  #-----------------------PLAYER TAB-------------------
+  
+  # -----PLAYER sidebar------
   playerInputMax <- reactive({
     all_nba_data%>%
       dplyr::filter(player==input$selectPlayer) %>% 
@@ -149,15 +228,48 @@ server <- function(input, output, session) {
   })
   
   
-  
-  
-  
   output$players<-renderText({ src()})
   
  
+  #---------TEAM sidebar----------
+  
+  teamInputMax <- reactive({
+    all_nba_data%>%
+      dplyr::filter(team_name==input$selectTeam) %>% 
+      select(distance)%>%max()
+  })
+  teamInputMin <- reactive({
+    all_nba_data%>%
+      dplyr::filter(team_name==input$selectTeam) %>% 
+      select(distance)%>%min()
+  })
+  
+  observe(updateSliderInput(session, 
+                            inputId = "distanceToRimTeam", 
+                            min = playerInputMin(),
+                            max = playerInputMax(), 
+                            value =c(playerInputMin(), playerInputMax()) ))
   
   
-  #------- Main panel --------------
+  src_team <- reactive({
+    # browser()
+    src <- all_nba_data %>% 
+      dplyr::filter(!is.na(pictures_team)) %>% 
+      dplyr::select(team_name, pictures_team)%>%
+      dplyr::filter(team_name == input$selectTeam)%>%dplyr::group_by(team_name)%>%unique()
+    img <- c('<img src="',src$pictures_team,'"width="100%", height="250px">')
+  })
+  
+  output$team<-renderText({ src_team()})
+  
+  
+  #-----LEAGUE sidebar
+  
+  output$league<-renderText({ c('<img src="','https://images.squarespace-cdn.com/content/v1/59c81157a8b2b0dc32a75c6f/1506287496945-0CJTL627EUO6OB9ZYKIJ/ada1027c456aed126d673601ace9099d_icon.png?format=300w','"width="100%", height="250px">')})
+  
+  
+  
+  #-------PLAYER Main panel --------------
   
   
   df_players <- reactive({
@@ -315,6 +427,11 @@ server <- function(input, output, session) {
         showlegend = F
       )
   })
+  
+  
+  #-----------TEAM Main panel
+  
+  
 
 }
 
