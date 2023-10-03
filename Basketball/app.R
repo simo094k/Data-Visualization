@@ -10,7 +10,7 @@ library(tidyverse)
 
 all_nba_data <- all_nba_data%>%
   dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
-                made_factor = as.factor(ifelse(made == "True", "Made", "Not made")))
+                made_factor = as.factor(ifelse(made == T, "Made", "Not made")))
 
 
 ui <- fluidPage(
@@ -84,7 +84,8 @@ ui <- fluidPage(
              mainPanel(
                        h2("Indhold for players"),
                        plotlyOutput("scatterplot"),
-                       plotlyOutput("bar_chart"))
+                       plotlyOutput("bar_chart"),
+                       plotlyOutput("radarplot"))
            )),
   
   
@@ -161,20 +162,30 @@ server <- function(input, output, session) {
   
   df_players <- reactive({
     all_nba_data %>%
-      dplyr::filter(player == input$selectPlayer)  # Bogdan Bogdanović
+      dplyr::filter(player == input$selectPlayer &
+                    quarter %in% input$quarters &
+                    time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
+                    distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
+                    status %in% input$gamestatus)  
   })
 
-  
 
 
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
-    plot_ly(df_player, x = ~shotX, y = ~shotY, color = ~made_factor,
+    scatter <- plot_ly(df_player, x = ~shotX, y = ~shotY, color = ~made_factor,
             type = "scatter", mode = "markers", source = "scatter_selected",
-            customdata = ~made_factor) %>%
+            customdata = ~made_factor) 
+    
+    scatter <- scatter%>%
+      # add_segments(x = 0, xend = 0, y = -4, yend = 23.75, 
+      #              line = list(color = 'black', width = 2, dash = 'dash'),
+      #              showlegend = FALSE) %>%
       layout(
-        clickmode = "event+select"
+        clickmode = "event+select",
+        xaxis = list(range=list(0,50)),
+        yaxis=list(range=list(-4,47.75))
       )
   })
 
@@ -257,6 +268,52 @@ server <- function(input, output, session) {
           )
       })
     }
+  })
+  
+  
+  #Radar plot
+  radar_data <- reactive({
+    all_nba_data %>% 
+      dplyr::filter(player == input$selectPlayer) %>%
+      dplyr::summarise(dunksPerGame = sum(distance == 0) / length(unique(date)),
+                       threePointersPerGame = sum(shot_type == "3-pointer") 
+                       / length(unique(date)),
+                       twoPointersPerGame = sum(shot_type == "2-pointer") 
+                       / length(unique(date)),
+                       ShotsUnderPressurePerGame = length(
+                         quarter == "4th quarter" 
+                         & time_remaining <= 5.0 
+                         & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
+                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 10)
+                       / sum(quarter == "4th quarter" 
+                             & time_remaining <= 5.0 
+                             & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
+                                    - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
+                       pointsPerGame = (2*sum(made == T 
+                                              & shot_type == "2-pointer")
+                                        + 3*sum(made == T 
+                                                & shot_type == "3-pointer"))
+                       / length(unique(date)))
+  })
+  
+  output$radarplot<- renderPlotly({
+    #browser()
+    radar_data2 <- radar_data()
+    plot_ly( 
+      type = 'scatterpolar',
+      r = unlist(radar_data2),
+      theta = colnames(radar_data2),
+      fill = 'toself'
+    ) %>%
+      layout(
+        polar = list(
+          radialaxis = list(
+            visible = T,
+            range = c(0,ceiling(max(radar_data2)))
+          )
+        ),
+        showlegend = F
+      )
   })
 
 }

@@ -17,11 +17,11 @@ radar_data1 <- data %>%
                                        & quarter == "4th quarter" 
                                        & time_remaining <= 5.0 
                                        & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
-                                             - as.integer(strsplit(score, "-")[[1]][2]))) <= 8.)
+                                             - as.integer(strsplit(score, "-")[[1]][2]))) <= 10)
                    / sum(quarter == "4th quarter" 
                          & time_remaining <= 5.0 
                          & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
-                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 8.),
+                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
                    pointsPerGame = (2*sum(made == "True" 
                                        & shot_type == "2-pointer")
                    + 3*sum(made == "True" 
@@ -43,7 +43,7 @@ radar_data2 <- data %>%
                    / sum(quarter == "4th quarter" 
                          & time_remaining <= 5.0 
                          & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
-                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 8.),
+                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
                    pointsPerGame = (2*sum(made == "True" 
                                           & shot_type == "2-pointer")
                                     + 3*sum(made == "True" 
@@ -55,8 +55,7 @@ fig <- plot_ly(
   r = unlist(radar_data2),
   theta = colnames(radar_data2),
   fill = 'toself'
-) 
-fig <- fig %>%
+) %>%
   layout(
     polar = list(
       radialaxis = list(
@@ -66,5 +65,15 @@ fig <- fig %>%
     ),
     showlegend = F
   )
+# fig <- fig %>%
+#   layout(
+#     polar = list(
+#       radialaxis = list(
+#         visible = T,
+#         range = c(0,ceiling(max(radar_data2)))
+#       )
+#     ),
+#     showlegend = F
+#   )
 
 fig
