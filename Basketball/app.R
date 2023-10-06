@@ -5,6 +5,10 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 
+source("court_plot.R")
+source("generate_scatter_plot.R")
+source("generate_heatmap_plot.R")
+
 #Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
 
@@ -77,7 +81,22 @@ ui <- fluidPage(
                               multiple = T, 
                               #selectize = F, 
                               label = "Game status"
-               )
+               ),
+               radioGroupButtons(inputId = "charttype",
+                                  label = "Chart type", 
+                                  choices = c("Scatter", "Heatmap", "Hexagonal"), 
+                                  selected = "Scatter",
+                                  size = "sm", 
+                                  justified = T,
+                                  checkIcon = list(
+                                   yes = icon("square-check"),
+                                   no = icon("square")
+                                  ),  status = "primary"),
+               
+               
+               #UI related to scatter (only shown if scatter is selected)
+               uiOutput("scatter_size_slider")
+               
                
                
                
@@ -218,6 +237,21 @@ server <- function(input, output, session) {
                             max = playerInputMax(), 
                             value =c(playerInputMin(), playerInputMax()) ))
   
+  
+  
+  output$scatter_size_slider = renderUI({
+    req(input$charttype == "Scatter")
+    
+    sliderInput("scatter_size",
+                "Dot size",
+                min = 0,
+                max = 1,
+                ticks = F, 
+                value = 1,
+                step = 0.1)
+  })
+  
+  
   src <- reactive({
    # browser()
     src <- all_nba_data %>% 
@@ -281,24 +315,52 @@ server <- function(input, output, session) {
                     status %in% input$gamestatus)  
   })
 
+  
 
 
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
-    scatter <- plot_ly(df_player, x = ~shotX, y = ~shotY, color = ~made_factor,
-            type = "scatter", mode = "markers", source = "scatter_selected",
-            customdata = ~made_factor) 
     
-    scatter <- scatter%>%
-      # add_segments(x = 0, xend = 0, y = -4, yend = 23.75, 
-      #              line = list(color = 'black', width = 2, dash = 'dash'),
-      #              showlegend = FALSE) %>%
-      layout(
-        clickmode = "event+select",
-        xaxis = list(range=list(0,50)),
-        yaxis=list(range=list(-4,47.75))
-      )
+    if(input$charttype == "Scatter"){
+      #browser()
+      req(input$scatter_size)
+      withProgress({
+        
+        create_scatter(df_player, 
+                       court = plot_court(), 
+                       size = input$scatter_size, source="scatter_selected")%>%
+          layout( clickmode = "event+select",
+                  plot_bgcolor='rgba(0,0,0,0)',
+                  paper_bgcolor='rgba(0,0,0,0)')
+        
+          # plot_ly(df_player, 
+          #                  x = ~shotX, 
+          #                  y = ~shotY, 
+          #                   marker = list(size = input$scatter_size),
+          #                  color = ~made_factor,
+          #                  type = "scatter", mode = "markers", source = "scatter_selected",
+          #                  customdata = ~made_factor) %>%
+          # layout(
+          #   clickmode = "event+select",
+          #   xaxis = list(range=list(0,50)),
+          #   yaxis=list(range=list(-4,47.75))
+          # )
+        
+      }, message = "Calculating...")
+      
+    }else if(input$charttype == "Heatmap"){
+      scatter <- plot_ly(df_player, x = ~shotX, y = ~shotY, color = "red",
+                         type = "scatter", mode = "markers", source = "scatter_selected",
+                         customdata = ~made_factor) %>%
+        layout(
+          clickmode = "event+select",
+          xaxis = list(range=list(0,50)),
+          yaxis=list(range=list(-4,47.75))
+        )
+    }else{print("Not implemented")}
+    
+    
   })
 
   # Create the bar chart
@@ -372,12 +434,24 @@ server <- function(input, output, session) {
 
     else if (!is.null(bar_selected_data())) {
       output$scatterplot <- renderPlotly({
-        plot_ly(selected_data, x = ~shotX, y = ~shotY, color = ~made_factor,
-                type = "scatter", mode = "markers",
-                source = "scatter_selected") %>%
-          layout(
-            clickmode = "event+select"
-          )
+        
+        create_scatter(df_player, 
+                       court = plot_court(), 
+                       size = input$scatter_size, source="scatter_selected")%>%
+          layout( clickmode = "event+select")
+          
+        
+        
+        # plot_ly(selected_data, 
+        #         x = ~shotX, 
+        #         y = ~shotY, 
+        #         marker = list(size = input$scatter_size),
+        #         color = ~made_factor,
+        #         type = "scatter", mode = "markers",
+        #         source = "scatter_selected") %>%
+        #   layout(
+        #     clickmode = "event+select"
+        #   )
       })
     }
   })
