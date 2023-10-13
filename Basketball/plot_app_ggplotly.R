@@ -6,12 +6,14 @@ library(magrittr)
 library(tidyverse)
 library(dplyr)
 
+source("court_plot.R")
+
 #load("data/basketball.RData") #Load environment to get the necessary data
 dict <<- list("0" = "2-pointer", "1" = "3-pointer")
 change_names <<- list("2-pointer" = "two_pointer",
-                     "3-pointer" = "three_pointer")
+                      "3-pointer" = "three_pointer")
 
-
+#all_nba_data <- all_nba_data %>% mutate(shotX = shotX - 24)
 all_nba_data <- all_nba_data%>%
   dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
                 made_factor = as.factor(ifelse(made == T, "Made", "Not made")))
@@ -43,14 +45,25 @@ server <- function(input, output, session) {
   df_players <- reactive({
     all_nba_data %>%
       dplyr::filter(player == "Kobe Bryant")  # "Ja Morant"
+    
+    #all_nba_data %>% mutate(shotX = shotX - round(mean(shotX), 1))
+    #print(all_nba_data)
   })
   
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
-    scatter <- plot_ly(df_player, x = ~shotX, y = ~shotY, color = ~made_factor,
-                       type = "scatter", mode = "markers", source = "scatter_selected",
-                       customdata = ~made_factor) 
+    scatter <- ggplotly(
+                          plot_court() +
+                          geom_point(
+                            data=df_player,
+                            aes(x = shotX, 
+                                y = shotY,
+                                color = made_factor), 
+                            alpha = 0.8,
+                            size = 0.2), source = "scatter_selected")
+
+    
     
     scatter <- scatter%>%
       # add_segments(x = 0, xend = 0, y = -4, yend = 23.75, 
@@ -62,7 +75,7 @@ server <- function(input, output, session) {
                      # scaleanchor = "y", 
                      # scaleratio = 1,
                      # fixedrange = F
-                     ),
+        ),
         yaxis=list(range=list(-4,47.75))
       )
   })
@@ -125,15 +138,14 @@ server <- function(input, output, session) {
   scatter_selected_data <- reactive({
     df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
-    trace <- unique(selected_data$customdata)
+    trace <- unique(selected_data$curveNumber)
+    trace <- ifelse(trace == 1, "Made", "Not made")
     
     if (!is.null(selected_data)) {
-      print(selected_data$x)
-      print(selected_data$y)
-      print(trace)
       filtered_scatter_data <- df_player[df_player$shotX %in% selected_data$x &
                                            df_player$shotY %in% selected_data$y &
                                            df_player$made_factor %in% trace, ]
+      print(filtered_scatter_data)
       return(filtered_scatter_data)
     } else {
       return(NULL)
@@ -234,58 +246,22 @@ server <- function(input, output, session) {
     }
     else if (!is.null(line_selected_data())) {
       output$scatterplot <- renderPlotly({
-        plot_ly(selected_data, x = ~shotX, y = ~shotY, color = ~made_factor,
-                type = "scatter", mode = "markers",
-                source = "scatter_selected") %>%
+        
+        ggplotly(
+            plot_court() + 
+            geom_point(
+              data=selected_data,
+              aes(x = shotX, 
+                  y = shotY,
+                  color = made_factor), 
+              alpha = 0.8,
+              size = 0.2), source = "scatter_selected") %>%
           layout(
             clickmode = "event+select"
-        )
-     })
+          )
+      })
     }
   })
 }
 
 shinyApp(ui, server)
-
-
-
-# Create the bar chart
-#output$bar_chart <- renderPlotly({
-#  df_player <- df_players()
-#  plot_ly(df_player, x = ~distance, color = ~made_factor, type = "histogram",
-#          source = "bar_selected", 
-#          yaxis = list(title = 'Count'), customdata = ~made_factor) %>%
-#    layout(
-#      clickmode = "event+select"
-#    )
-#})
-
-#bar_selected_data <- reactive({
-#  df_player <- df_players()
-#  selected_data <- event_data("plotly_selected", source = "bar_selected")
-#  if (!is.null(selected_data)) {
-#    min_dist = min(selected_data$x)
-#    max_dist = max(selected_data$x)
-#    filtered_bar_data <- df_player[min_dist < df_player$distance &
-#                                     df_player$distance < max_dist, ]
-#    return(filtered_bar_data)
-#  } else {
-#    return(NULL)
-#  }
-#})
-
-#else if (!is.null(bar_selected_data())) {
-#  output$scatterplot <- renderPlotly({
-#    plot_ly(selected_data, x = ~shotX, y = ~shotY, color = ~made_factor,
-#            type = "scatter", mode = "markers",
-#            source = "scatter_selected") %>%
-#      layout(
-#        clickmode = "event+select"
-#      )
-#  })
-#}
-
-#else if (!is.null(bar_selected_data())) {
-#  selected_data <- bar_selected_data()
-#  return(selected_data)
-#}
