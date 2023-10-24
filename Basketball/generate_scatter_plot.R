@@ -7,5 +7,14 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
             y = shotY,
             color = made_factor), 
         alpha = alpha,
-        size = size), source = source)
+        size = size)+
+      theme(legend.text = element_text(size = rel(0.6)) ) , source = source)%>%
+    layout(legend = list(
+      orientation = "h",
+      title=list(text=''),
+      font = list(size=2)
+    ),
+    xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
+    )%>%
+    config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", "toImage", "hoverClosestGl2d", "hoverCompareCartesian", "hoverClosestCartesian"))
 }

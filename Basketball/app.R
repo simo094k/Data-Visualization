@@ -12,6 +12,7 @@ source("generate_heatmap_plot.R")
 #Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
 
+#all_nba_data <- all_nba_data%>%mutate(made_factor = ifelse(made_factor == "Not made", "missed", "made"))
 
 # all_nba_data <- all_nba_data%>%
 #   dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
@@ -47,6 +48,17 @@ ui <- fluidPage(
                            selectize = T),
                #br(),
                h5("Filters"),
+               
+               selectizeInput(inputId = "seasons", 
+                              choices = all_nba_data %>% 
+                                dplyr::select(season)%>%
+                                unique()%>%arrange(desc(season)), 
+                              selected = "2020/21", 
+                              multiple = T, 
+                              #selectize = F, 
+                              label = "Seasons"
+               ),
+               
                  selectizeInput(inputId = "quarters", 
                                choices = all_nba_data %>% 
                                  dplyr::select(quarter)%>%
@@ -102,10 +114,20 @@ ui <- fluidPage(
                
                , width = 2)),
              mainPanel(
-                       h2("Indhold for players"),
-                       plotlyOutput("scatterplot"),
-                       plotlyOutput("bar_chart"),
-                       plotlyOutput("radarplot"))
+               fluidRow(h2("Indhold for players"),
+                 column(width = 8, 
+                        fluidRow(
+                          style = "width:102.5%;",
+                          plotlyOutput("scatterplot",width = "100%")
+                        ),br(),br(),
+                        fluidRow(
+                          style = "width:102.5%;",
+                          plotlyOutput("bar_chart"))
+                 ),
+                 column(width=4,
+                        plotlyOutput("radarplot"))
+               )
+                       )
            )),
   
   
@@ -231,11 +253,29 @@ server <- function(input, output, session) {
       select(distance)%>%min()
   })
   
+  playerRecentSeason <- reactive({
+    all_nba_data%>%
+      dplyr::filter(player==input$selectPlayer) %>% 
+      select(season)%>%unique()%>%arrange(desc(season))%>%head(1)
+  })
+  
+  playerSeasons <- reactive({
+    all_nba_data %>% 
+      dplyr::filter(player==input$selectPlayer) %>% 
+      dplyr::select(season)%>%
+      unique()%>%arrange(desc(season))
+  })
+  
   observe(updateSliderInput(session, 
                             inputId = "distanceToRim", 
                             min = playerInputMin(),
                             max = playerInputMax(), 
                             value =c(playerInputMin(), playerInputMax()) ))
+  
+  observe(updateSelectizeInput(session,
+                              inputId = "seasons",
+                              choices = playerSeasons(),
+                              selected = playerRecentSeason() ))
   
   
   
@@ -309,6 +349,7 @@ server <- function(input, output, session) {
   df_players <- reactive({
     all_nba_data %>%
       dplyr::filter(player == input$selectPlayer &
+                    season %in% input$seasons &
                     quarter %in% input$quarters &
                     time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
                     distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
@@ -332,7 +373,15 @@ server <- function(input, output, session) {
                        size = input$scatter_size, source="scatter_selected")%>%
           layout( clickmode = "event+select",
                   plot_bgcolor='rgba(0,0,0,0)',
-                  paper_bgcolor='rgba(0,0,0,0)')
+                  paper_bgcolor='rgba(0,0,0,0)',
+                  legend='rgba(0,0,0,0)',
+                  autosize = F, width = "100%", height = 600, margin = list(
+                    l = 0,
+                    r = 0,
+                    b = 25,
+                    t = 10,
+                    pad = 2
+                  ))
         
           # plot_ly(df_player, 
           #                  x = ~shotX, 
@@ -350,13 +399,22 @@ server <- function(input, output, session) {
       }, message = "Calculating...")
       
     }else if(input$charttype == "Heatmap"){
-      scatter <- plot_ly(df_player, x = ~shotX, y = ~shotY, color = "red",
-                         type = "scatter", mode = "markers", source = "scatter_selected",
-                         customdata = ~made_factor) %>%
+     create_heatmap(df_player, 
+                    court = plot_court()) %>%
         layout(
-          clickmode = "event+select",
-          xaxis = list(range=list(0,50)),
-          yaxis=list(range=list(-4,47.75))
+          #clickmode = "event+select",
+          # xaxis = list(range=list(0,50)),
+          # yaxis=list(range=list(-4,47.75)),
+          plot_bgcolor='rgba(0,0,0,0)',
+          paper_bgcolor='rgba(0,0,0,0)',
+          legend='rgba(300,200,255,0)',
+          autosize = F, width = "100%", height = 600, margin = list(
+            l = 50,
+            r = 50,
+            b = 0,
+            t = 50,
+            pad = 2
+          )
         )
     }else{print("Not implemented")}
     
@@ -437,8 +495,7 @@ server <- function(input, output, session) {
         
         create_scatter(df_player, 
                        court = plot_court(), 
-                       size = input$scatter_size, source="scatter_selected")%>%
-          layout( clickmode = "event+select")
+                       size = input$scatter_size, source="scatter_selected")
           
         
         
