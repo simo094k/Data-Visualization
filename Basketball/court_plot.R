@@ -115,7 +115,7 @@ plot_court <- function(court_theme = court_themes$light, use_short_three = FALSE
       color = court_theme$lines
     ) +
     coord_fixed(ylim = c(0, 35), xlim = c(-25, 25)) +
-    theme_minimal(base_size = 22) +
+    theme_minimal(base_size = 10) +
     theme(
       text = element_text(color = court_theme$text),
       plot.background = element_rect(fill = court_theme$court, color = court_theme$court),
