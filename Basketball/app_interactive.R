@@ -17,7 +17,9 @@ dict <<- list("0" = "2-pointer", "1" = "3-pointer")
 change_names <<- list("2-pointer" = "two_pointer",
                       "3-pointer" = "three_pointer")
 
-#all_nba_data <- all_nba_data%>%mutate(made_factor = ifelse(made_factor == "Not made", "missed", "made"))
+#all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+#                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
+#                                      shotX = shotX - 23.62167)
 
 #all_nba_data <- all_nba_data%>%
 # dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
