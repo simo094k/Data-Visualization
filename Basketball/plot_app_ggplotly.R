@@ -71,11 +71,7 @@ server <- function(input, output, session) {
       #              showlegend = FALSE) %>%
       layout(
         clickmode = "event+select",
-        xaxis = list(range=list(-40,90)
-                     # scaleanchor = "y", 
-                     # scaleratio = 1,
-                     # fixedrange = F
-        ),
+        xaxis = list(range=list(-40,90)),
         yaxis=list(range=list(-4,47.75))
       )
   })
