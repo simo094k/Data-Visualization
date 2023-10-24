@@ -19,12 +19,13 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light){
         labels = c("lower", "higher"),
         option = "inferno",
         #option = "magna",
-        guide = guide_colorbar(barwidth = 15)
+        guide = guide_colorbar(barwidth = 15),
+        trans = "sqrt"
       ) +
       ggtitle("Shot Frequency")+
       theme(
         legend.text = element_text(size = rel(0.6)) 
-      ))%>%
+      ),width = 900, height = 1000)%>%
     layout(legend = list(
       orientation = "h"
     ),

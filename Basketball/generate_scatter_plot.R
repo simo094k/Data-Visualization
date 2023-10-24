@@ -5,16 +5,17 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
         data=df_player,
         aes(x = shotX - mean(shotX), 
             y = shotY,
-            color = made_factor), 
+            color = made_factor
+            ), 
         alpha = alpha,
         size = size)+
-      theme(legend.text = element_text(size = rel(0.6)) ) , source = source)%>%
+      theme(legend.text = element_text(size = rel(0.6)) ) , source = source, width = 975, height = 1000)%>%
     layout(legend = list(
       orientation = "h",
-      title=list(text=''),
-      font = list(size=2)
+      title=list(text='')
+      #font = list(size=2)
     ),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
     )%>%
-    config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", "toImage", "hoverClosestGl2d", "hoverCompareCartesian", "hoverClosestCartesian"))
+    config(modeBarButtonsToRemove = c( "zoom2d", "pan2d", "toImage", "hoverCompareCartesian"))
 }
