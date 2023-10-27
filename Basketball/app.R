@@ -393,7 +393,7 @@ server <- function(input, output, session) {
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
-    
+    # browser()
     if(input$charttype == "Scatter"){
      # browser()
       req(input$scatter_size)
@@ -438,7 +438,7 @@ server <- function(input, output, session) {
   # Create the line chart
   output$line_chart <- renderPlotly({
     df_player <- df_players()
-    #browser()
+    # browser()
     plot <- create_linechart(data=df_player, source="line_trace")
     plot <- plot %>% layout(
       xaxis = list(title = "Season"),
@@ -454,9 +454,11 @@ server <- function(input, output, session) {
   scatter_selected_data <- reactive({
     df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
-    trace <- unique(selected_data$customdata)
-
+    trace <- unique(selected_data$curveNumber)
+    trace <- ifelse(trace == 1, "made", "missed")
+    
     if (!is.null(selected_data)) {
+      #browser()
       filtered_scatter_data <- df_player[df_player$shotX %in% selected_data$x &
                                            df_player$shotY %in% selected_data$y &
                                            df_player$made_factor %in% trace, ]
@@ -502,6 +504,7 @@ server <- function(input, output, session) {
   observe({
     selected_data <- common_selected_data()
     if (!is.null(scatter_selected_data())) {
+      #browser()
       output$line_chart <- renderPlotly({
         plot <- create_linechart(data=selected_data, source="line_trace")
         plot <- plot %>% layout(
