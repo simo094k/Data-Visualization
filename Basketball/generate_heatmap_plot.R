@@ -1,9 +1,14 @@
-create_heatmap <- function(df_player, court, court_theme=court_themes$light){
+create_heatmap <- function(df_player, court, court_theme=court_themes$light, source=NULL){
   ggplotly(
     court +
+      geom_point(  # use scatterplot ontop of heatmap to select points :D
+        data = df_player,
+        aes(x = shotX, 
+            y = shotY), 
+        alpha = 0) +
       stat_density_2d_filled(
         data = df_player,
-        aes(x = shotX - mean(shotX), y = shotY, fill = stat(density / max(density))),
+        aes(x = shotX, y = shotY, fill = stat(density / max(density))),
         geom = "raster", contour = FALSE, interpolate = TRUE, n = 200
       ) +
       geom_path(
@@ -25,7 +30,7 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light){
       ggtitle("Shot Frequency")+
       theme(
         legend.text = element_text(size = rel(0.6)) 
-      ),width = 900, height = 1000)%>%
+      ),width = 900, height = 1000, source=source)%>%
     layout(legend = list(
       orientation = "h"
     ),

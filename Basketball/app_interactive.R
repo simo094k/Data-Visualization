@@ -10,33 +10,28 @@ source("generate_scatter_plot.R")
 source("generate_heatmap_plot.R")
 source("generate_linechart_plot.R")
 
+#Load the data, but when you have loaded it once, comment the below line out.
+#load("data/basketball.RData") #Load environment to get the necessary data
+
 dict <<- list("0" = "2-pointer", "1" = "3-pointer")
 change_names <<- list("2-pointer" = "two_pointer",
                       "3-pointer" = "three_pointer")
 
-#Load the data, but when you have loaded it once, comment the below line out.
-#load("data/basketball.RData") #Load environment to get the necessary data
-
 #all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
 #                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
 #                                      shotX = shotX - 23.62167)
+
+#all_nba_data <- all_nba_data%>%
+# dplyr::mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+#               made_factor = as.factor(ifelse(made == T, "Made", "Not made")),
+#               shotX = shotX - 23.62167)
 
 
 ui <- fluidPage(
   tags$style(HTML("
           .navbar .navbar-header {float: left; width:15% }
           .navbar .navbar-nav {float: left; }
-          .container {min-width: 1250} 
-          
-          
-          .option[data-value=made], .item[data-value=made]{
-          background: red !important;
-          color: white !important;
-        }
-        .option[data-value=missed], .item[data-value=missed]{
-          background: green !important;
-          color: white !important;
-        }
+          .container {min-width: 1250px}
         ")
   ),
   shinyjs::useShinyjs(),
@@ -62,30 +57,24 @@ ui <- fluidPage(
                #br(),
                h5("Filters"),
                
-               pickerInput(inputId = "seasons", 
+               selectizeInput(inputId = "seasons", 
                               choices = all_nba_data %>% 
                                 dplyr::select(season)%>%
                                 unique()%>%arrange(desc(season)), 
                               selected = "2020/21", 
                               multiple = T, 
                               #selectize = F, 
-                              label = "Seasons",
-                           options = list(`actions-box` = TRUE, 
-                                          "style-base" = "form-control", 
-                                          style = "")
+                              label = "Seasons"
                ),
                
-                 pickerInput(inputId = "quarters", 
+                 selectizeInput(inputId = "quarters", 
                                choices = all_nba_data %>% 
                                  dplyr::select(quarter)%>%
                                  unique(), 
                              selected = "1st quarter", 
                              multiple = T, 
                              #selectize = F, 
-                             label = "Game period",
-                             options = list(`actions-box` = TRUE, 
-                                            "style-base" = "form-control", 
-                                            style = "")
+                             label = "Game period"
                               ),
                
                sliderInput(inputId = "timeRemaining",
@@ -104,7 +93,6 @@ ui <- fluidPage(
                            ticks = F,
                            label = "Shot distance to basket (ft)"),
                
-               
                selectizeInput(inputId = "gamestatus", 
                               choices = all_nba_data %>% 
                                 dplyr::select(status)%>%
@@ -114,15 +102,6 @@ ui <- fluidPage(
                               #selectize = F, 
                               label = "Game status"
                ),
-               
-               selectizeInput(inputId = "made", 
-                              choices = c("made", "missed"), 
-                              selected = c("made", "missed"), 
-                              multiple = T, 
-                              #selectize = F, 
-                              label = "Shot made"
-               ),
-               
                radioGroupButtons(inputId = "charttype",
                                   label = "Chart type", 
                                   choices = c("Scatter", "Heatmap", "Hexagonal"), 
@@ -138,27 +117,25 @@ ui <- fluidPage(
                #UI related to scatter (only shown if scatter is selected)
                uiOutput("scatter_size_slider")
                
+               
+               
+               
                , width = 2)),
              mainPanel(
                fluidRow(h2("Indhold for players"),
-                 column(width = 6, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
+                 column(width = 8, 
                         fluidRow(
-                          #style = "width:102.5%;",
+                          style = "width:102.5%;",
                           plotlyOutput("scatterplot",width = "100%")
                         ),br(),br(),
                         fluidRow(
-                          )
+                          style = "width:102.5%;",
+                          plotlyOutput("line_chart"))
                  ),
-                 column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
-                        fluidRow(#style = "width:102.5%;",
-                                 plotlyOutput("line_chart")),
-                        br(),br(),
-                        fluidRow(#style = "width:102.5%;",
-                          plotlyOutput("radarplot",width = "100%")
-                        )
-                        )
+                 column(width=4,
+                        plotlyOutput("radarplot"))
                )
-               , width = 10)
+                       )
            )),
   
   
@@ -303,7 +280,7 @@ server <- function(input, output, session) {
                             max = playerInputMax(), 
                             value =c(playerInputMin(), playerInputMax()) ))
   
-  observe(updatePickerInput(session,
+  observe(updateSelectizeInput(session,
                               inputId = "seasons",
                               choices = playerSeasons(),
                               selected = playerRecentSeason() ))
@@ -384,37 +361,38 @@ server <- function(input, output, session) {
                     quarter %in% input$quarters &
                     time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
                     distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
-                    status %in% input$gamestatus &
-                    made_factor %in% input$made) 
+                    status %in% input$gamestatus)  
   })
 
+  
 
 
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
-    # browser()
+    
     if(input$charttype == "Scatter"){
-     # browser()
-      req(input$scatter_size)
-      withProgress({
+      #browser()
+      req(input$scatter_size)  
+      withProgress({  # create_scatter
         create_scatter(df_player, court = plot_court(), 
                        size = input$scatter_size, source="scatter_selected")%>%
           layout( clickmode = "event+select",
                   plot_bgcolor='rgba(0,0,0,0)',
                   paper_bgcolor='rgba(0,0,0,0)',
                   legend='rgba(0,0,0,0)',
-                  autosize = F, margin = list(
+                  autosize = F, width = "100%", height = 600, margin = list(
                     l = 0,
                     r = 0,
                     b = 25,
                     t = 10,
                     pad = 2
                   ))
+        
       }, message = "Calculating...")
       
     }else if(input$charttype == "Heatmap"){
-      create_heatmap(df_player, court = plot_court(), source="scatter_selected") %>%
+     create_heatmap(df_player, court = plot_court(), source="scatter_selected") %>%
         layout(
           clickmode = "event+select",
           # xaxis = list(range=list(0,50)),
@@ -422,7 +400,7 @@ server <- function(input, output, session) {
           plot_bgcolor='rgba(0,0,0,0)',
           paper_bgcolor='rgba(0,0,0,0)',
           legend='rgba(300,200,255,0)',
-          autosize = F, margin = list(
+          autosize = F, width = "100%", height = 600, margin = list(
             l = 50,
             r = 50,
             b = 0,
@@ -438,7 +416,6 @@ server <- function(input, output, session) {
   # Create the line chart
   output$line_chart <- renderPlotly({
     df_player <- df_players()
-    # browser()
     plot <- create_linechart(data=df_player, source="line_trace")
     plot <- plot %>% layout(
       xaxis = list(title = "Season"),
@@ -449,25 +426,28 @@ server <- function(input, output, session) {
     )
     plot
   })
+  
 
   # Capture selected data from the scatterplot
   scatter_selected_data <- reactive({
     df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
+    test_sel <<- selected_data
+    print(selected_data)
     trace <- unique(selected_data$curveNumber)
-    trace <- ifelse(trace == 1, "made", "missed")
+    trace <- ifelse(trace == 1, "Made", "Not made")
     
     if (!is.null(selected_data)) {
-      #browser()
       filtered_scatter_data <- df_player[df_player$shotX %in% selected_data$x &
                                            df_player$shotY %in% selected_data$y &
                                            df_player$made_factor %in% trace, ]
+      print(filtered_scatter_data)
       return(filtered_scatter_data)
     } else {
       return(NULL)
     }
   })
-
+  
   # Capture traces from lineplot
   line_selected_data <- reactive({
     df_player <- df_players()
@@ -504,7 +484,6 @@ server <- function(input, output, session) {
   observe({
     selected_data <- common_selected_data()
     if (!is.null(scatter_selected_data())) {
-      #browser()
       output$line_chart <- renderPlotly({
         plot <- create_linechart(data=selected_data, source="line_trace")
         plot <- plot %>% layout(
@@ -522,18 +501,18 @@ server <- function(input, output, session) {
         if(input$charttype == "Scatter"){
           create_scatter(selected_data, court = plot_court(), 
                          size = input$scatter_size, source="scatter_selected")%>%
-            layout(clickmode = "event+select",
-                   plot_bgcolor='rgba(0,0,0,0)',
-                   paper_bgcolor='rgba(0,0,0,0)',
-                   legend='rgba(0,0,0,0)',
-                   autosize = F, margin = list(
-                     l = 0,
-                     r = 0,
-                     b = 25,
-                     t = 10,
-                     pad = 2
-                   ))
-          
+          layout(clickmode = "event+select",
+                  plot_bgcolor='rgba(0,0,0,0)',
+                  paper_bgcolor='rgba(0,0,0,0)',
+                  legend='rgba(0,0,0,0)',
+                  autosize = F, width = "100%", height = 600, margin = list(
+                    l = 0,
+                    r = 0,
+                    b = 25,
+                    t = 10,
+                    pad = 2
+                  ))
+  
         }else if(input$charttype == "Heatmap"){
           create_heatmap(selected_data, court = plot_court(), 
                          source="scatter_selected") %>%
@@ -544,7 +523,7 @@ server <- function(input, output, session) {
               plot_bgcolor='rgba(0,0,0,0)',
               paper_bgcolor='rgba(0,0,0,0)',
               legend='rgba(300,200,255,0)',
-              autosize = F, margin = list(
+              autosize = F, width = "100%", height = 600, margin = list(
                 l = 50,
                 r = 50,
                 b = 0,
@@ -561,8 +540,7 @@ server <- function(input, output, session) {
   #Radar plot
   radar_data <- reactive({
     all_nba_data %>% 
-      dplyr::filter(player == input$selectPlayer & 
-                      season %in% input$seasons) %>%
+      dplyr::filter(player == input$selectPlayer) %>%
       dplyr::summarise(dunksPerGame = sum(distance == 0) / length(unique(date)),
                        threePointersPerGame = sum(shot_type == "3-pointer") 
                        / length(unique(date)),
@@ -584,116 +562,24 @@ server <- function(input, output, session) {
                        / length(unique(date)))
   })
   
-  get_avg <- function(selected_season, data){
-    league_avg <- data %>%
-      dplyr::filter(season == selected_season) %>%
-      group_by(date, id_team) %>%
-      dplyr::summarise(
-        dunksPerGame = sum(distance == 0) / length(unique(player)),
-        threePointersPerGame = sum(shot_type == "3-pointer") / length(unique(player)),
-        twoPointersPerGame = sum(shot_type == "2-pointer") / length(unique(player)),
-        ShotsUnderPressurePerGame = sum(
-          quarter == "4th quarter" & time_remaining <= 5.0 & (abs(as.integer(strsplit(score, "-")[[1]][1]) - as.integer(strsplit(score, "-")[[1]][2]))) <= 10
-        ) / length(unique(player)),
-        pointsPerGame = (2*sum(made == TRUE & shot_type == "2-pointer") + (3*sum(made == TRUE & shot_type == "3-pointer"))) / length(unique(player))
-      ) %>%
-      ungroup() %>%
-      select(-c(date, id_team)) %>%
-      colMeans()
-    
-    # Create a data frame with the 'season' variable
-    league_avg$season <- selected_season
-    league_avg_df <- data.frame(t(league_avg))
-    
-    return(league_avg_df)
-  }
-  
-  filter_players_by_position <- function(data, input_position) {
-    filtered_data <- data[grepl(input_position, data$position, ignore.case = TRUE), ]
-    return(filtered_data)
-  }
-  
-  player_position <- reactive({
-    chosen_player_position <- all_nba_data %>% filter(player == input$selectPlayer) %>% select(c(position)) %>% unique(.)
-    chosen_player_position <- chosen_player_position$position
-    
-    seasons <- unique(all_nba_data$season)
-    
-    
-    compare_league <- F
-    if(compare_league == T) {
-      compare_legend <<- 'League Average'
-      compare_df <-
-        lapply(seasons, get_avg, data = all_nba_data) %>%
-        do.call(rbind, .) %>%
-        unnest(everything()) %>%
-        as.data.frame()
-    } else{
-      compare_legend <<- chosen_player_position
-      compare_df <-
-        lapply(seasons,
-               get_avg,
-               data = filter_players_by_position(all_nba_data, chosen_player_position)) %>%
-        do.call(rbind, .) %>%
-        unnest(everything()) %>%
-        as.data.frame()}
-  })
-  
- 
-  
-  
-
-  
-  
-  
-  compare_radar <- reactive({
-    compare_df <- player_position()
-    compare_df %>% filter(season %in% input$seasons)
-    
-  })
-
-  
-  
-  
   output$radarplot<- renderPlotly({
     #browser()
     radar_data2 <- radar_data()
-    
-    compare_radar2 <- compare_radar()
-    
-    
-    fig <- plot_ly(
+    plot_ly( 
       type = 'scatterpolar',
-      fill = 'toself',
-      mode = 'markers'
-    ) 
-    fig <- fig %>%
-      add_trace(
-        r = unlist(radar_data2),
-        theta = colnames(radar_data2),
-        name = input$selectPlayer
-      ) 
-    
-    fig <- fig %>%
-      add_trace(
-        r = colMeans(compare_radar2 %>% select(-c(season))),
-        theta = compare_radar2 %>% select(-c(season)) %>% colnames(.),
-        name = compare_legend
-      )
-    fig <- fig %>%
+      r = unlist(radar_data2),
+      theta = colnames(radar_data2),
+      fill = 'toself'
+    ) %>%
       layout(
         polar = list(
           radialaxis = list(
             visible = T,
-            range = 
-              c(0,max(max(ceiling(max(radar_data2))), max(ceiling(compare_radar2 %>% select(-c(season))))))
+            range = c(0,ceiling(max(radar_data2)))
           )
         ),
-        showlegend = T
+        showlegend = F
       )
-    
-    fig
-    
   })
   
   

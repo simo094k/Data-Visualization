@@ -3,7 +3,7 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
     court +
       geom_point(
         data=df_player,
-        aes(x = shotX - mean(shotX), 
+        aes(x = shotX, 
             y = shotY,
             color = made_factor
             ), 
