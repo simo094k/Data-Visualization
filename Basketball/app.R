@@ -16,7 +16,7 @@ change_names <<- list("2-pointer" = "two_pointer",
 
 #Load the data, but when you have loaded it once, comment the below line out.
 # load("data/basketball.RData") #Load environment to get the necessary data
-# 
+# # 
 # all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
 #                                       made_factor = ifelse(made_factor == "Not made", "missed", "made"),
 #                                       shotX = shotX - 23.62167)
@@ -48,9 +48,10 @@ ui <- fluidPage(
              
   tabPanel(title = "Player",
            sidebarLayout(
-             div(class="sidebar",
+             div(class="sidebar", style="width: 75%;",
              sidebarPanel(
-               htmlOutput("players", width = 50, height = 50),
+               htmlOutput("players", width = 50, height = 50
+                          ),
                selectInput(inputId = "selectPlayer", 
                            choices = all_nba_data %>% 
                              dplyr::filter(!is.na(pictures) & num>=600) %>% 
@@ -142,12 +143,11 @@ ui <- fluidPage(
              mainPanel(br(),br(),
                fluidRow(
                  column(width = 6, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
+                        br(),br(),br(),
                         fluidRow(
                           #style = "width:102.5%;",
                           plotlyOutput("scatterplot",width = "100%")
-                        ),br(),br(),
-                        fluidRow(
-                          )
+                        ),br(),br()
                  ),
                  column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                         fluidRow(#style = "width:102.5%;",

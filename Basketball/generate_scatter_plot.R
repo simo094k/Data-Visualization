@@ -14,12 +14,14 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
             legend.justification = c("center", "bottom"),
             legend.box.just = "center",
             legend.margin = margin(6, 6, 6, 6)) , source = source, width = 975, height = 975)%>%
-    layout(legend = list(
+    layout(
+           legend = list(
       'rgba(0,0,0,0)', 
       orientation = "h",   # show entries horizontally
       xanchor = "center",  # use center of legend as anchor
       x = 0.5, y=0.17,
-      title=list(text=F)
+      title=list(text='', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
+      bgcolor = 'rgba(0,0,0,0)'
       #font = list(size=2)
     ),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)

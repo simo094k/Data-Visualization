@@ -8,7 +8,7 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
         alpha = 0) +
       stat_density_2d_filled(
         data = df_player,
-        aes(x = shotX, y = shotY, fill = stat(density / max(density))),
+        aes(x = shotX, y = shotY, fill = ifelse(stat(density / max(density)) <=0.0075, NA, stat(density / max(density)) ) ),
         geom = "raster", contour = FALSE, interpolate = TRUE, n = 200
       ) +
       geom_path(
@@ -21,20 +21,21 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
         "",
         limits = c(0, 1),
         breaks = c(0, 1),
-        labels = c("lower", "higher"),
+        labels = c("Low", "High"),
         option = "inferno",
         #option = "magna",
         guide = guide_colorbar(barwidth = 15),
-        trans = "sqrt"
+        trans = "sqrt",na.value = "white"
       ) +
-      ggtitle("Shot Frequency")+
       theme(
-        legend.text = element_text(size = rel(0.6)) 
-      ),width = 900, height = 1000, source=source)%>%
-    layout(legend = list(
-      orientation = "h"
-    ),
-    
+        legend.text = element_text(size = rel(1.0)) 
+      ),width = 950, height = 975, source=source)%>%
+    layout(
+    #   legend = list(
+    #   #orientation = "h",
+    #   bgcolor = 'rgba(0,0,0,0)'
+    # ),
+    title=list(text='Shot frequecy', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
     )%>%
     config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", "toImage", "hoverClosestGl2d", "hoverCompareCartesian", "hoverClosestCartesian"))
