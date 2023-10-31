@@ -15,11 +15,11 @@ change_names <<- list("2-pointer" = "two_pointer",
                       "3-pointer" = "three_pointer")
 
 #Load the data, but when you have loaded it once, comment the below line out.
-#load("data/basketball.RData") #Load environment to get the necessary data
-
-#all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
-#                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
-#                                      shotX = shotX - 23.62167)
+# load("data/basketball.RData") #Load environment to get the necessary data
+# 
+# all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+#                                       made_factor = ifelse(made_factor == "Not made", "missed", "made"),
+#                                       shotX = shotX - 23.62167)
 
 
 ui <- fluidPage(
@@ -29,18 +29,18 @@ ui <- fluidPage(
           .container {min-width: 1250} 
           
           
-          .option[data-value=made], .item[data-value=made]{
-          background: red !important;
-          color: white !important;
-        }
-        .option[data-value=missed], .item[data-value=missed]{
-          background: green !important;
-          color: white !important;
-        }
+        #   .option[data-value=made], .item[data-value=made]{
+        #   background: red !important;
+        #   color: white !important;
+        # }
+        # .option[data-value=missed], .item[data-value=missed]{
+        #   background: green !important;
+        #   color: white !important;
+        # }
         ")
   ),
   shinyjs::useShinyjs(),
-  navbarPage(title = tagList(("Basketball"),
+  navbarPage(title = tagList(("HoopViz"),
                              actionLink(inputId = "sidebar_button",
                                         label = NULL,
                                         icon = icon("basketball"))), 
@@ -94,7 +94,7 @@ ui <- fluidPage(
                            value = c(0,12),
                            step = 0.5,
                            ticks = F, 
-                           label = "Time remaining in Q (min)"),
+                           label = "Time remaining in quarter (min)"),
                
                sliderInput(inputId = "distanceToRim",
                            min = 0.0,
@@ -115,17 +115,17 @@ ui <- fluidPage(
                               label = "Game status"
                ),
                
-               selectizeInput(inputId = "made", 
-                              choices = c("made", "missed"), 
-                              selected = c("made", "missed"), 
-                              multiple = T, 
-                              #selectize = F, 
-                              label = "Shot made"
-               ),
+               # selectizeInput(inputId = "made", 
+               #                choices = c("made", "missed"), 
+               #                selected = c("made", "missed"), 
+               #                multiple = T, 
+               #                #selectize = F, 
+               #                label = "Shot made"
+               # ),
                
                radioGroupButtons(inputId = "charttype",
-                                  label = "Chart type", 
-                                  choices = c("Scatter", "Heatmap", "Hexagonal"), 
+                                  label = "Court type", 
+                                  choices = c("Scatter", "Heatmap"), 
                                   selected = "Scatter",
                                   size = "sm", 
                                   justified = T,
@@ -139,8 +139,8 @@ ui <- fluidPage(
                uiOutput("scatter_size_slider")
                
                , width = 2)),
-             mainPanel(
-               fluidRow(h2("Indhold for players"),
+             mainPanel(br(),br(),
+               fluidRow(
                  column(width = 6, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                         fluidRow(
                           #style = "width:102.5%;",
@@ -152,9 +152,18 @@ ui <- fluidPage(
                  column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                         fluidRow(#style = "width:102.5%;",
                                  plotlyOutput("line_chart")),
-                        br(),br(),
+                        br(),
                         fluidRow(#style = "width:102.5%;",
+                          prettyRadioButtons(
+                            inputId = "radarPick",
+                            label = NULL,
+                            choices = c("Position average", "League average"), selected ="Position average", 
+                            outline = TRUE,
+                            plain = TRUE,
+                            icon = icon("basketball")
+                          ),
                           plotlyOutput("radarplot",width = "100%")
+                          
                         )
                         )
                )
@@ -306,7 +315,8 @@ server <- function(input, output, session) {
   observe(updatePickerInput(session,
                               inputId = "seasons",
                               choices = playerSeasons(),
-                              selected = playerRecentSeason() ))
+                              selected = playerRecentSeason() )
+    )
   
   
   
@@ -384,8 +394,7 @@ server <- function(input, output, session) {
                     quarter %in% input$quarters &
                     time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
                     distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
-                    status %in% input$gamestatus &
-                    made_factor %in% input$made) 
+                    status %in% input$gamestatus) 
   })
 
 
@@ -403,12 +412,15 @@ server <- function(input, output, session) {
           layout( clickmode = "event+select",
                   plot_bgcolor='rgba(0,0,0,0)',
                   paper_bgcolor='rgba(0,0,0,0)',
-                  legend='rgba(0,0,0,0)',
+                  legend=list('rgba(0,0,0,0)', 
+                              orientation = "h",   # show entries horizontally
+                              xanchor = "center",  # use center of legend as anchor
+                              x = 0.5, y=0.17),
                   autosize = F, margin = list(
                     l = 0,
                     r = 0,
-                    b = 25,
-                    t = 10,
+                    b = 0,
+                    t = 0,
                     pad = 2
                   ))
       }, message = "Calculating...")
@@ -430,7 +442,7 @@ server <- function(input, output, session) {
             pad = 2
           )
         )
-    }else{print("Not implemented")}
+    }
     
     
   })
@@ -441,9 +453,12 @@ server <- function(input, output, session) {
     # browser()
     plot <- create_linechart(data=df_player, source="line_trace")
     plot <- plot %>% layout(
-      xaxis = list(title = "Season"),
+      xaxis = list(title = F),
       yaxis = list(title = "Number of Shots Made"),
-      legend = list(title = "Shot Type"),
+      legend = list(title = "Shot Type",
+                    orientation = "h",   # show entries horizontally
+                    xanchor = "center",  # use center of legend as anchor
+                    x = 0.5),
       title = "2- and 3-Pointer shot average per game",
       clickmode = "event+select"
     )
@@ -508,9 +523,12 @@ server <- function(input, output, session) {
       output$line_chart <- renderPlotly({
         plot <- create_linechart(data=selected_data, source="line_trace")
         plot <- plot %>% layout(
-          xaxis = list(title = "Season"),
+          xaxis = list(title = NULL),
           yaxis = list(title = "Number of Shots Made"),
-          legend = list(title = "Shot Type"),
+          legend = list(title = "Shot Type",
+                        orientation = "h",   # show entries horizontally
+                        xanchor = "center",  # use center of legend as anchor
+                        x = 0.5),
           title = "2- and 3-Pointer shot average per game",
           clickmode = "event+select"
         )
@@ -525,11 +543,14 @@ server <- function(input, output, session) {
             layout(clickmode = "event+select",
                    plot_bgcolor='rgba(0,0,0,0)',
                    paper_bgcolor='rgba(0,0,0,0)',
-                   legend='rgba(0,0,0,0)',
+                   legend=list('rgba(0,0,0,0)',
+                               orientation = "h",   # show entries horizontally
+                               xanchor = "center",  # use center of legend as anchor
+                               x = 0.5),
                    autosize = F, margin = list(
                      l = 0,
                      r = 0,
-                     b = 25,
+                     b = 0,
                      t = 10,
                      pad = 2
                    ))
@@ -619,16 +640,15 @@ server <- function(input, output, session) {
     
     seasons <- unique(all_nba_data$season)
     
-    
-    compare_league <- F
-    if(compare_league == T) {
+    #browser()
+    if(input$radarPick == "League average") {
       compare_legend <<- 'League Average'
       compare_df <-
         lapply(seasons, get_avg, data = all_nba_data) %>%
         do.call(rbind, .) %>%
         unnest(everything()) %>%
         as.data.frame()
-    } else{
+    } else if(input$radarPick == "Position average"){
       compare_legend <<- chosen_player_position
       compare_df <-
         lapply(seasons,
@@ -647,6 +667,7 @@ server <- function(input, output, session) {
   
   
   compare_radar <- reactive({
+    #browser()
     compare_df <- player_position()
     compare_df %>% filter(season %in% input$seasons)
     
@@ -689,7 +710,10 @@ server <- function(input, output, session) {
               c(0,max(max(ceiling(max(radar_data2))), max(ceiling(compare_radar2 %>% select(-c(season))))))
           )
         ),
-        showlegend = T
+        showlegend = T,
+        legend = list(orientation = "h",   # show entries horizontally
+                      xanchor = "center",  # use center of legend as anchor
+                      x = 0.5)
       )
     
     fig
