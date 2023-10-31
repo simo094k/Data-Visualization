@@ -40,7 +40,7 @@ ui <- fluidPage(
         ")
   ),
   shinyjs::useShinyjs(),
-  navbarPage(title = tagList(("Basketball"),
+  navbarPage(title = tagList(("HoopViz"),
                              actionLink(inputId = "sidebar_button",
                                         label = NULL,
                                         icon = icon("basketball"))), 
@@ -94,7 +94,7 @@ ui <- fluidPage(
                            value = c(0,12),
                            step = 0.5,
                            ticks = F, 
-                           label = "Time remaining in Q (min)"),
+                           label = "Time remaining in quarter (min)"),
                
                sliderInput(inputId = "distanceToRim",
                            min = 0.0,
@@ -124,8 +124,8 @@ ui <- fluidPage(
                # ),
                
                radioGroupButtons(inputId = "charttype",
-                                  label = "Chart type", 
-                                  choices = c("Scatter", "Heatmap", "Hexagonal"), 
+                                  label = "Court type", 
+                                  choices = c("Scatter", "Heatmap"), 
                                   selected = "Scatter",
                                   size = "sm", 
                                   justified = T,
@@ -139,7 +139,7 @@ ui <- fluidPage(
                uiOutput("scatter_size_slider")
                
                , width = 2)),
-             mainPanel(
+             mainPanel(br(),br(),
                fluidRow(
                  column(width = 6, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                         fluidRow(
@@ -152,9 +152,18 @@ ui <- fluidPage(
                  column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                         fluidRow(#style = "width:102.5%;",
                                  plotlyOutput("line_chart")),
-                        br(),br(),br(),br(),
+                        br(),
                         fluidRow(#style = "width:102.5%;",
+                          prettyRadioButtons(
+                            inputId = "radarPick",
+                            label = NULL,
+                            choices = c("Position average", "League average"), selected ="Position average", 
+                            outline = TRUE,
+                            plain = TRUE,
+                            icon = icon("basketball")
+                          ),
                           plotlyOutput("radarplot",width = "100%")
+                          
                         )
                         )
                )
@@ -385,8 +394,7 @@ server <- function(input, output, session) {
                     quarter %in% input$quarters &
                     time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
                     distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
-                    status %in% input$gamestatus &
-                    made_factor %in% input$made) 
+                    status %in% input$gamestatus) 
   })
 
 
@@ -434,7 +442,7 @@ server <- function(input, output, session) {
             pad = 2
           )
         )
-    }else{print("Not implemented")}
+    }
     
     
   })
@@ -632,16 +640,15 @@ server <- function(input, output, session) {
     
     seasons <- unique(all_nba_data$season)
     
-    
-    compare_league <- F
-    if(compare_league == T) {
+    #browser()
+    if(input$radarPick == "League average") {
       compare_legend <<- 'League Average'
       compare_df <-
         lapply(seasons, get_avg, data = all_nba_data) %>%
         do.call(rbind, .) %>%
         unnest(everything()) %>%
         as.data.frame()
-    } else{
+    } else if(input$radarPick == "Position average"){
       compare_legend <<- chosen_player_position
       compare_df <-
         lapply(seasons,
@@ -660,6 +667,7 @@ server <- function(input, output, session) {
   
   
   compare_radar <- reactive({
+    #browser()
     compare_df <- player_position()
     compare_df %>% filter(season %in% input$seasons)
     
