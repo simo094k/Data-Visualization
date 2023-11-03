@@ -17,9 +17,11 @@ change_names <<- list("2-pointer" = "two_pointer",
 #Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
 
-#all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
-#                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
-#                                      shotX = shotX - 23.62167)
+all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
+                                      shot_type = ifelse(shot_type == "2-pointer", "two_pointer", 
+                                                         "three_pointer"),
+                                      shotX = shotX - 23.62167)
 
 
 ui <- fluidPage(
@@ -563,7 +565,7 @@ server <- function(input, output, session) {
     all_nba_data %>% 
       dplyr::filter(player == input$selectPlayer & 
                       season %in% input$seasons) %>%
-      dplyr::summarise(dunksPerGame = sum(distance == 0) / length(unique(date)),
+      dplyr::summarise(dunksPerGame = sum(distance < 2) / length(unique(date)),
                        threePointersPerGame = sum(shot_type == "3-pointer") 
                        / length(unique(date)),
                        twoPointersPerGame = sum(shot_type == "2-pointer") 
