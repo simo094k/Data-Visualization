@@ -488,7 +488,7 @@ server <- function(input, output, session) {
   # Capture traces from lineplot
   line_selected_data <- reactive({
     df_player <- df_players()
-    selected_data <- event_data("plotly_selected", source = "line_trace")
+    selected_data <- event_data("plotly_selected", source="line_trace")
     trace <- unique(selected_data$customdata)
     #browser()
     if (!is.null(selected_data)) {
