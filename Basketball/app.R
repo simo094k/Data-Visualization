@@ -10,7 +10,7 @@ source("generate_scatter_plot.R")
 source("generate_heatmap_plot.R")
 source("generate_linechart_plot.R")
 
-dict <<- list("0" = "2-pointer", "1" = "3-pointer")
+dict <<- list("0" = "two_pointer", "1" = "three_pointer", "2" = "two_pointer", "3" = "NULL")
 change_names <<- list("2-pointer" = "two_pointer",
                       "3-pointer" = "three_pointer")
 
@@ -475,7 +475,7 @@ server <- function(input, output, session) {
     trace <- ifelse(trace == 1, "made", "missed")
     
     if (!is.null(selected_data)) {
-      #browser()
+      # browser()
       filtered_scatter_data <- df_player[df_player$shotX %in% selected_data$x &
                                            df_player$shotY %in% selected_data$y &
                                            df_player$made_factor %in% trace, ]
@@ -499,8 +499,23 @@ server <- function(input, output, session) {
         vals <- c(dict[[as.character(i)]], vals)
       }
       
-      filtered_scatter_data <- df_player %>% dplyr::filter(season %in% c(unique(selected_data$x)),
-                                                           shot_type %in% vals)
+      if(2 %in% curves & not(1 %in% curves)){  # we have all 2-pointers
+        if(curves == 2){
+          filtered_scatter_data <- df_player %>% 
+            dplyr::filter(season %in% c(unique(selected_data$x)),
+                          distance < 2)
+        }
+        else{
+          filtered_scatter_data <- df_player %>% 
+            dplyr::filter(season %in% c(unique(selected_data$x)),
+                          distance < 2 | shot_type %in% c("three_pointer"))
+        }
+
+      }
+      else{ # we can have 3-pointers alone
+        filtered_scatter_data <- df_player %>% dplyr::filter(season %in% c(unique(selected_data$x)),
+                                                             shot_type %in% vals)
+      }
       return(filtered_scatter_data)
     } else {
       return(NULL)

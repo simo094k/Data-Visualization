@@ -5,7 +5,7 @@ create_linechart <- function(data, sel_season, source=NULL){
     dplyr::group_by(season, shot_type) %>%
     dplyr::summarise(num_shot = n(), num_games = length(unique(date))) 
   
-  df_dunks <- data %>% filter(distance > 2) %>% 
+  df_dunks <- data %>% filter(distance < 2) %>% 
     dplyr::group_by(season, shot_type) %>%
     dplyr::summarise(num_shot = n(), num_games = length(unique(date))) %>%
     dplyr::mutate(shot_type = ifelse(shot_type == "two_pointer", "dunks", shot_type))
