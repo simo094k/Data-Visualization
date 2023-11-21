@@ -8,7 +8,8 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
             color = made_factor
             ), 
         alpha = alpha,
-        size = size)+
+        size = size) + # c("#1b9e77", "#d95f02")
+      scale_color_manual(values = c("#66c2a5", "#fc8d62")) + 
       theme(legend.text = element_text(size = rel(1.0)),
             legend.position = c(.95, .95),
             legend.justification = c("center", "bottom"),

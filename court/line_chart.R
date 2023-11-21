@@ -101,7 +101,7 @@ plot <- plot %>% layout(
   xaxis = list(title = "Season"),
   yaxis = list(title = "Number of Shots Made"),
   legend = list(title = "Shot Type"),
-  title = "2- and 3-Pointer shot average per game"
+  title = "Average shot success per game"
 )
 
 plot

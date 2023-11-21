@@ -461,7 +461,7 @@ server <- function(input, output, session) {
                     orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5),
-      title = "2- and 3-Pointer shot average per game",
+      title = "Average shot success per game",
       clickmode = "event+select"
     )
     plot
@@ -499,20 +499,34 @@ server <- function(input, output, session) {
         vals <- c(dict[[as.character(i)]], vals)
       }
       
+      
+      # "0" = "two_pointer", "1" = "three_pointer", "2" = "two_pointer", 
+      # "3" = "NULL"
+      
+      # 2 = dunks
+      # 1 = three_pointer
+      #browser()
+      
       if(2 %in% curves & not(1 %in% curves)){  # we have all 2-pointers
-        if(curves == 2){
+        if(all(curves == 2)){  # dunks
           filtered_scatter_data <- df_player %>% 
             dplyr::filter(season %in% c(unique(selected_data$x)),
                           distance < 2)
         }
-        else{
+        else{  # two and pointer and dunks
+          #browser()
           filtered_scatter_data <- df_player %>% 
             dplyr::filter(season %in% c(unique(selected_data$x)),
-                          distance < 2 | shot_type %in% c("three_pointer"))
+                          shot_type %in% vals)
         }
-
+      }
+      else if(2 %in% curves & (1 %in% curves) & not(0 %in% curves)){  # Only dunks and three pointers
+        filtered_scatter_data <- df_player %>% 
+          dplyr::filter(season %in% c(unique(selected_data$x)),
+                        distance < 2 | (distance >= 2 & shot_type == "three_pointer"))
       }
       else{ # we can have 3-pointers alone
+        #browser()
         filtered_scatter_data <- df_player %>% dplyr::filter(season %in% c(unique(selected_data$x)),
                                                              shot_type %in% vals)
       }
@@ -542,13 +556,13 @@ server <- function(input, output, session) {
         plot <- create_linechart(data=selected_data, sel_season=input$seasons,
                                  source="line_trace")
         plot <- plot %>% layout(
-          xaxis = list(title = NULL),
+          xaxis = list(title = F),
           yaxis = list(title = "Number of Shots Made"),
           legend = list(title = "Shot Type",
                         orientation = "h",   # show entries horizontally
                         xanchor = "center",  # use center of legend as anchor
                         x = 0.5),
-          title = "2- and 3-Pointer shot average per game",
+          title = "Average shot success per game",
           clickmode = "event+select"
         )
         plot
@@ -603,10 +617,10 @@ server <- function(input, output, session) {
     all_nba_data %>% 
       dplyr::filter(player == input$selectPlayer & 
                       season %in% input$seasons) %>%
-      dplyr::summarise(dunksPerGame = sum(distance == 0) / length(unique(date)),
-                       threePointersPerGame = sum(shot_type == "3-pointer") 
+      dplyr::summarise(dunksPerGame = sum(distance < 2) / length(unique(date)),
+                       threePointersPerGame = sum(shot_type == "three_pointer") 
                        / length(unique(date)),
-                       twoPointersPerGame = sum(shot_type == "2-pointer") 
+                       twoPointersPerGame = sum(shot_type == "two_pointer") 
                        / length(unique(date)),
                        ShotsUnderPressurePerGame = length(
                          quarter == "4th quarter" 
@@ -618,9 +632,9 @@ server <- function(input, output, session) {
                              & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
                                     - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
                        pointsPerGame = (2*sum(made == T 
-                                              & shot_type == "2-pointer")
+                                              & shot_type == "two_pointer")
                                         + 3*sum(made == T 
-                                                & shot_type == "3-pointer"))
+                                                & shot_type == "three_pointer"))
                        / length(unique(date)))
   })
   
@@ -629,13 +643,13 @@ server <- function(input, output, session) {
       dplyr::filter(season == selected_season) %>%
       group_by(date, id_team) %>%
       dplyr::summarise(
-        dunksPerGame = sum(distance == 0) / length(unique(player)),
-        threePointersPerGame = sum(shot_type == "3-pointer") / length(unique(player)),
-        twoPointersPerGame = sum(shot_type == "2-pointer") / length(unique(player)),
+        dunksPerGame = sum(distance < 2) / length(unique(player)),
+        threePointersPerGame = sum(shot_type == "three_pointer") / length(unique(player)),
+        twoPointersPerGame = sum(shot_type == "two_pointer") / length(unique(player)),
         ShotsUnderPressurePerGame = sum(
           quarter == "4th quarter" & time_remaining <= 5.0 & (abs(as.integer(strsplit(score, "-")[[1]][1]) - as.integer(strsplit(score, "-")[[1]][2]))) <= 10
         ) / length(unique(player)),
-        pointsPerGame = (2*sum(made == TRUE & shot_type == "2-pointer") + (3*sum(made == TRUE & shot_type == "3-pointer"))) / length(unique(player))
+        pointsPerGame = (2*sum(made == TRUE & shot_type == "two_pointer") + (3*sum(made == TRUE & shot_type == "three_pointer"))) / length(unique(player))
       ) %>%
       ungroup() %>%
       select(-c(date, id_team)) %>%
@@ -711,14 +725,18 @@ server <- function(input, output, session) {
       add_trace(
         r = unlist(radar_data2),
         theta = colnames(radar_data2),
-        name = input$selectPlayer
+        name = input$selectPlayer,
+        marker = list(color = c("#1b9e77")),
+        fillcolor = "rgba(27,158,119,0.3)"
       ) 
     
     fig <- fig %>%
       add_trace(
         r = colMeans(compare_radar2 %>% select(-c(season))),
         theta = compare_radar2 %>% select(-c(season)) %>% colnames(.),
-        name = compare_legend
+        name = compare_legend,
+        marker = list(color = c("#7570b3")),
+        fillcolor = "rgba(117,112,179,0.3)"
       )
     fig <- fig %>%
       layout(

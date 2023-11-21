@@ -61,16 +61,22 @@ create_linechart <- function(data, sel_season, source=NULL){
   
   plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
                   type = "scatter", mode = "lines+markers", name = "two_pointer",
-                  line = list(dash = "dash"), connectgaps = TRUE,
-                  showlegend = TRUE, source = source)
+                  line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
+                  showlegend = TRUE, source = source, 
+                  marker = list(color = c("#7570b3")),
+                  text = paste("Average amount of two point shots", "<br>", "made per game"))
   
   plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "three_pointer", 
-                             line = list(dash = "dash"), connectgaps = T,
-                             showlegend = TRUE)
+                             line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
+                             showlegend = TRUE, 
+                             marker = list(color = c("#d95f02")),
+                             text = paste("Average amount of three point shots", "<br>", "made per game"))
   
   plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "dunks", 
-                             line = list(dash = "dash"), connectgaps = T,
-                             showlegend = TRUE)
+                             line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
+                             showlegend = TRUE, 
+                             marker = list(color = c("#1b9e77")),
+                             text = paste("Average amount of dunks", "<br>", "made per game"))
   
   plot <- plot %>% add_trace(y = df_reshaped[["all_season"]],
                              line = list(dash = "dash"), connectgaps = F,
