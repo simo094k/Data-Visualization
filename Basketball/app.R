@@ -136,8 +136,8 @@ ui <- fluidPage(
                               
                               radioGroupButtons(inputId = "charttype",
                                                 label = "Court type", 
-                                                choices = c("Scatter", "Heatmap"), 
-                                                selected = "Scatter",
+                                                choices = c("Dot Map", "Heat Map"), 
+                                                selected = "Dot Map",
                                                 size = "sm", 
                                                 justified = T,
                                                 checkIcon = list(
@@ -264,8 +264,8 @@ ui <- fluidPage(
                               
                               radioGroupButtons(inputId = "charttypeTeam",
                                                 label = "Court type", 
-                                                choices = c("Scatter", "Heatmap"), 
-                                                selected = "Scatter",
+                                                choices = c("Dot Map", "Heat Map"), 
+                                                selected = "Dot Map",
                                                 size = "sm", 
                                                 justified = T,
                                                 checkIcon = list(
@@ -416,7 +416,7 @@ server <- function(input, output, session) {
   
   
   output$scatter_size_slider = renderUI({
-    req(input$charttype == "Scatter")
+    req(input$charttype == "Dot Map")
     
     sliderInput("scatter_size",
                 "Dot size",
@@ -503,7 +503,7 @@ server <- function(input, output, session) {
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
     # browser()
-    if(input$charttype == "Scatter"){
+    if(input$charttype == "Dot Map"){
       # browser()
       req(input$scatter_size)
       withProgress({
@@ -525,7 +525,7 @@ server <- function(input, output, session) {
                   ))
       }, message = "Calculating...")
       
-    }else if(input$charttype == "Heatmap"){
+    }else if(input$charttype == "Heat Map"){
       create_heatmap(df_player, court = plot_court(), source="scatter_selected") %>%
         layout(
           clickmode = "event+select",
@@ -687,7 +687,7 @@ server <- function(input, output, session) {
                      pad = 2
                    ))
           
-        }else if(input$charttype == "Heatmap"){
+        }else if(input$charttype == "Heat Map"){
           create_heatmap(selected_data, court = plot_court(), 
                          source="scatter_selected") %>%
             layout(
@@ -913,7 +913,7 @@ server <- function(input, output, session) {
                   ))
       }, message = "Calculating...")
       
-    }else if(input$charttypeTeam == "Heatmap"){
+    }else if(input$charttypeTeam == "Heat Map"){
       create_heatmap(df_team, court = plot_court(), source="scatter_selected") %>%
         layout(
           clickmode = "event+select",
@@ -1075,7 +1075,7 @@ server <- function(input, output, session) {
                      pad = 2
                    ))
           
-        }else if(input$charttypeTeam == "Heatmap"){
+        }else if(input$charttypeTeam == "Heat Map"){
           create_heatmap(selected_data_team, court = plot_court(), 
                          source="scatter_selected") %>%
             layout(
