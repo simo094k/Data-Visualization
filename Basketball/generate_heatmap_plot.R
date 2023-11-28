@@ -35,7 +35,7 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
     #   #orientation = "h",
     #   bgcolor = 'rgba(0,0,0,0)'
     # ),
-    title=list(text='Shot frequecy', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
+    title=list(text='Shot frequency', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
     )%>%
     config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", "toImage", "hoverClosestGl2d", "hoverCompareCartesian", "hoverClosestCartesian"))

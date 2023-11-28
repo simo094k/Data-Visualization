@@ -16,11 +16,11 @@ change_names <<- list("2-pointer" = "two_pointer",
 
 #Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
-#all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
-#                                      made_factor = ifelse(made_factor == "Not made", "missed", "made"),
-#                                      shot_type = ifelse(shot_type == "2-pointer", "two_pointer", 
-#                                                         "three_pointer"),
-#                                      shotX = shotX - 23.62167)
+all_nba_data <- all_nba_data%>%mutate(quarter=dplyr::case_when(grepl("overtime", quarter)==T ~ "Overtime", TRUE ~ quarter),
+                                     made_factor = ifelse(made_factor == "Not made", "Missed", "Made"),
+                                     shot_type = ifelse(shot_type == "2-pointer", "two_pointer",
+                                                        "three_pointer"),
+                                     shotX = shotX - 24.0, shotY = shotY + 1.1)
 
 
 ui <- fluidPage(
@@ -153,24 +153,26 @@ ui <- fluidPage(
                                     column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                                            fluidRow(#style = "width:102.5%;",
                                              plotlyOutput("line_chart")),
-                                           br(),
+                                           br(), br(), 
                                            fluidRow(#style = "width:102.5%;",
-                                             prettyRadioButtons(
-                                               inputId = "radarPick",
-                                               label = NULL,
-                                               choices = c("Position average", "League average"), selected ="Position average", 
-                                               outline = TRUE,
-                                               plain = TRUE,
-                                               icon = icon("basketball")
-                                             ),
-                                             plotlyOutput("radarplot",width = "100%")
+                                             column(width = 11),
+                                             column(width = 1, br(), br(), 
+                                                    prettyRadioButtons(
+                                                      inputId = "radarPick",
+                                                      label = NULL,
+                                                      choices = c("Position average", "League average"), selected ="Position average", 
+                                                      outline = TRUE,
+                                                      plain = TRUE,
+                                                      icon = icon("basketball")
+                                                    )),
+                                             plotlyOutput("radarplot",width = "93.2%")
                                              
                                            )
                                     )
                                   )
                                   , width = 10)
                       )),
-             
+            
              
              tabPanel(title = "Team",
                       sidebarLayout(
@@ -455,12 +457,12 @@ server <- function(input, output, session) {
     plot <- create_linechart(data=df_player, sel_season=input$seasons, 
                              source="line_trace")
     plot <- plot %>% layout(
-      xaxis = list(title = F),
-      yaxis = list(title = "Number of Shots Made"),
+      xaxis = list(title = list(text="Season", standoff=11)),
+      yaxis = list(title = list(text="Number of shots made", standoff=11)),
       legend = list(title = "Shot Type",
                     orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
-                    x = 0.5),
+                    x = 0.5, y = -0.15),
       title = "Average shot success per game",
       clickmode = "event+select"
     )
@@ -472,7 +474,7 @@ server <- function(input, output, session) {
     df_player <- df_players()
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
     trace <- unique(selected_data$curveNumber)
-    trace <- ifelse(trace == 1, "made", "missed")
+    trace <- ifelse(trace == 1, "Made", "Missed")
     
     if (!is.null(selected_data)) {
       # browser()
@@ -676,7 +678,7 @@ server <- function(input, output, session) {
     #browser()
     if(input$radarPick == "League average") {
       compare_legend <<- 'League Average'
-      compare_df <-
+      compare_df <- 
         lapply(seasons, get_avg, data = all_nba_data) %>%
         do.call(rbind, .) %>%
         unnest(everything()) %>%
@@ -702,7 +704,7 @@ server <- function(input, output, session) {
   compare_radar <- reactive({
     #browser()
     compare_df <- player_position()
-    compare_df %>% filter(season %in% input$seasons)
+    compare_df %>% filter(season %in% input$seasons) 
     
   })
   
@@ -711,9 +713,17 @@ server <- function(input, output, session) {
   
   output$radarplot<- renderPlotly({
     #browser()
-    radar_data2 <- radar_data()
+    radar_data2 <- radar_data()  %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
+                                                   "Three pointers" = threePointersPerGame,
+                                                   "Dunks" = dunksPerGame,
+                                                   "Points" = pointsPerGame,
+                                                   "Shots under pressure" = ShotsUnderPressurePerGame)
     
-    compare_radar2 <- compare_radar()
+    compare_radar2 <- compare_radar() %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
+                                                        "Three pointers" = threePointersPerGame,
+                                                        "Dunks" = dunksPerGame,
+                                                        "Points" = pointsPerGame,
+                                                        "Shots under pressure" = ShotsUnderPressurePerGame)
     
     
     fig <- plot_ly(
@@ -740,6 +750,7 @@ server <- function(input, output, session) {
       )
     fig <- fig %>%
       layout(
+        title = list(text="Shot attempts per game", x=0.52),
         polar = list(
           radialaxis = list(
             visible = T,
@@ -750,8 +761,10 @@ server <- function(input, output, session) {
         showlegend = T,
         legend = list(orientation = "h",   # show entries horizontally
                       xanchor = "center",  # use center of legend as anchor
-                      x = 0.5)
-      )
+                      x = 0.5),
+        margin = list(t=90, pad=20)
+      )%>%
+    config(displayModeBar = FALSE)
     
     fig
     
