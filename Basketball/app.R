@@ -4,6 +4,9 @@ library(plotly)
 library(ggplot2)
 library(magrittr)
 library(tidyverse)
+library(viridis)
+ library(gridExtra)
+ library(dplyr)
 
 source("court_plot.R")
 source("generate_scatter_plot.R")
@@ -16,6 +19,8 @@ change_names <<- list("2-pointer" = "two_pointer",
 
 #Load the data, but when you have loaded it once, comment the below line out.
 #load("data/basketball.RData") #Load environment to get the necessary data
+
+#all_nba_data <- all_nba_data%>%mutate(team_name = ifelse(team_name == "New Orleans Hornets", "New Orleans Pelicans", team_name))
 
 
 #Dont uncomment the following.
@@ -65,8 +70,8 @@ ui <- fluidPage(
                               selectInput(inputId = "selectPlayer", 
                                           choices = all_nba_data %>% 
                                             dplyr::filter(!is.na(pictures) & num>=600) %>% 
-                                            select(Player=player)%>%unique()%>%
-                                            arrange(Player), 
+                                            dplyr::select(Player=player)%>%unique()%>%
+                                            dplyr::arrange(Player), 
                                           selected = "LeBron James", 
                                           label = NULL, 
                                           selectize = T),
@@ -194,8 +199,8 @@ ui <- fluidPage(
                               selectInput(inputId = "selectTeam", 
                                           choices = all_nba_data %>% 
                                             dplyr::filter(!is.na(pictures_team)) %>% 
-                                            select("Team name" = team_name)%>%unique()%>%
-                                            arrange("Team name"), 
+                                            dplyr::select("Team name" = team_name)%>%unique()%>%
+                                            dplyr::arrange("Team name"), 
                                           selected = "Boston Celtics", 
                                           label = NULL, 
                                           selectize = T),
@@ -276,7 +281,7 @@ ui <- fluidPage(
                               
                               #UI related to scatter (only shown if scatter is selected)
                               uiOutput("scatter_size_sliderTeam"),
-                              uiOutput("scatter_alpha_sliderTeam"),
+                              uiOutput("scatter_alpha_sliderTeam")
                               
                               , width = 2)),
                         mainPanel(
@@ -319,33 +324,25 @@ ui <- fluidPage(
              #LEAGUE
              tabPanel(title = "League",
                       sidebarLayout(
-                        div(class="sidebar",
+                        div(class="sidebar", style="width: 75%;",
                             sidebarPanel(
                               tags$style(".well {background-color:white;}"),
                               htmlOutput("league", width = 50, height = 50),
-                              h5("Filters"),
-                              selectizeInput(inputId = "seasonLeague", 
-                                             choices = all_nba_data %>% 
-                                               dplyr::select(season)%>%
-                                               unique(), 
-                                             selected = c("2009/10", "2010/11", "2011/12", "2012/13", "2013/14",
-                                                          "2014/15", "2015/16", "2016/17", "2017/18", "2018/19",
-                                                          "2019/20", "2020/21"), 
-                                             multiple = T, 
-                                             #selectize = F, 
-                                             label = "Pick seasons"
-                              ),
-                              selectizeInput(inputId = "positionLeague", 
-                                             choices = c("Center", "Forward", "Guard"), 
-                                             selected = c("Center", "Forward", "Guard"), 
-                                             multiple = T, 
-                                             #selectize = F, 
-                                             label = "Game period"
-                              )
+                              h5("Filters")
                               
                               , width = 2)),
                         mainPanel(
-                          h2("Indhold for league"))
+                          selectizeInput(inputId = "matrixplot_league_metric", 
+                                         choices = c("dunksRate", "twoPointersRate", "threePointersRate", "twoPointerSuccess", "threePointerSuccess"), 
+                                         selected = "threePointerSuccess", 
+                                         multiple = F, 
+                                         #selectize = F, 
+                                         label = "Choose metric"
+                          ),
+                          plotOutput("matrixplotLeague",width = "100%", height = 600)
+                        
+                          
+                          , width = 10)
                       ))
              
   ))
@@ -370,28 +367,28 @@ server <- function(input, output, session) {
   playerInputMax <- reactive({
     all_nba_data %>%
       dplyr::filter(player == input$selectPlayer) %>%
-      select(distance) %>% max()
+      dplyr::select(distance) %>% max()
   })
   playerInputMin <- reactive({
     all_nba_data %>%
       dplyr::filter(player == input$selectPlayer) %>%
-      select(distance) %>% min()
+      dplyr::select(distance) %>% min()
   })
   playerInputMax <- reactive({
     all_nba_data %>%
       dplyr::filter(player == input$selectPlayer) %>%
-      select(distance) %>% max()
+      dplyr::select(distance) %>% max()
   })
   playerInputMin <- reactive({
     all_nba_data %>%
       dplyr::filter(player == input$selectPlayer) %>%
-      select(distance) %>% min()
+      dplyr::select(distance) %>% min()
   })
 
   playerRecentSeason <- reactive({
     all_nba_data%>%
       dplyr::filter(player==input$selectPlayer) %>% 
-      select(season)%>%unique()%>%arrange(desc(season))%>%head(1)
+      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(1)
   })
   
   playerSeasons <- reactive({
@@ -448,12 +445,12 @@ server <- function(input, output, session) {
   teamInputMax <- reactive({
     all_nba_data%>%
       dplyr::filter(team_name==input$selectTeam) %>% 
-      select(distance)%>%max()
+      dplyr::select(distance)%>%max()
   })
   teamInputMin <- reactive({
     all_nba_data%>%
       dplyr::filter(team_name==input$selectTeam) %>% 
-      select(distance)%>%min()
+      dplyr::select(distance)%>%min()
   })
   
   observe(updateSliderInput(session, 
@@ -461,6 +458,18 @@ server <- function(input, output, session) {
                             min = teamInputMin(),
                             max = teamInputMax(), 
                             value =c(teamInputMin(), teamInputMax()) ))
+  
+  output$scatter_size_sliderTeam = renderUI({
+    req(input$charttype == "Dot Map")
+    
+    sliderInput("scatter_size_team",
+                "Dot size",
+                min = 0,
+                max = 1,
+                ticks = F, 
+                value = 0.8,
+                step = 0.1)
+  })
   
   
   src_team <- reactive({
@@ -669,7 +678,7 @@ server <- function(input, output, session) {
     }
     else if (!is.null(line_selected_data())) {
       output$scatterplot <- renderPlotly({
-        if(input$charttype == "Scatter"){
+        if(input$charttype == "Dot Map"){
           create_scatter(selected_data, court = plot_court(), 
                          size = input$scatter_size, source="scatter_selected")%>%
             layout(clickmode = "event+select",
@@ -751,7 +760,7 @@ server <- function(input, output, session) {
         pointsPerGame = (2*sum(made == TRUE & shot_type == "two_pointer") + (3*sum(made == TRUE & shot_type == "three_pointer"))) / length(unique(player))
       ) %>%
       ungroup() %>%
-      select(-c(date, id_team)) %>%
+      dplyr::select(-c(date, id_team)) %>%
       colMeans()
     
     # Create a data frame with the 'season' variable
@@ -767,7 +776,7 @@ server <- function(input, output, session) {
   }
   
   player_position <- reactive({
-    chosen_player_position <- all_nba_data %>% filter(player == input$selectPlayer) %>% select(c(position)) %>% unique(.)
+    chosen_player_position <- all_nba_data %>% filter(player == input$selectPlayer) %>% dplyr::select(c(position)) %>% unique(.)
     chosen_player_position <- chosen_player_position$position
     
     seasons <- unique(all_nba_data$season)
@@ -839,8 +848,8 @@ server <- function(input, output, session) {
     
     fig <- fig %>%
       add_trace(
-        r = colMeans(compare_radar2 %>% select(-c(season))),
-        theta = compare_radar2 %>% select(-c(season)) %>% colnames(.),
+        r = colMeans(compare_radar2 %>% dplyr::select(-c(season))),
+        theta = compare_radar2 %>% dplyr::select(-c(season)) %>% colnames(.),
         name = compare_legend,
         marker = list(color = c("#7570b3")),
         fillcolor = "rgba(117,112,179,0.3)"
@@ -852,7 +861,7 @@ server <- function(input, output, session) {
           radialaxis = list(
             visible = T,
             range = 
-              c(0,max(max(ceiling(max(radar_data2))), max(ceiling(compare_radar2 %>% select(-c(season))))))
+              c(0,max(max(ceiling(max(radar_data2))), max(ceiling(compare_radar2 %>% dplyr::select(-c(season))))))
           )
         ),
         showlegend = T,
@@ -891,12 +900,12 @@ server <- function(input, output, session) {
   output$scatterplot_team <- renderPlotly({
     df_team <- df_teams()
     # browser()
-    if(input$charttypeTeam == "Scatter"){
+    if(input$charttypeTeam == "Dot Map"){
       # browser()
-      req(input$scatter_size)
+      req(input$scatter_size_team)
       withProgress({
         create_scatter(df_team, court = plot_court(), 
-                       size = input$scatter_size, source="scatter_selected")%>%
+                       size = input$scatter_size_team, source="scatter_selected")%>%
           layout( clickmode = "event+select",
                   plot_bgcolor='rgba(0,0,0,0)',
                   paper_bgcolor='rgba(0,0,0,0)',
@@ -1059,7 +1068,7 @@ server <- function(input, output, session) {
       output$scatterplotTeam <- renderPlotly({
         if(input$charttypeTeam == "Scatter"){
           create_scatter(selected_data_team, court = plot_court(), 
-                         size = input$scatter_size, source="scatter_selected")%>%
+                         size = input$scatter_size_team, source="scatter_selected")%>%
             layout(clickmode = "event+select",
                    plot_bgcolor='rgba(0,0,0,0)',
                    paper_bgcolor='rgba(0,0,0,0)',
@@ -1139,7 +1148,7 @@ server <- function(input, output, session) {
         pointsPerGame = (2*sum(made == TRUE & shot_type == "two_pointer") + (3*sum(made == TRUE & shot_type == "three_pointer"))) / length(unique(team_name))
       ) %>%
       ungroup() %>%
-      select(-c(date, id_team)) %>%
+      dplyr::select(-c(date, id_team)) %>%
       colMeans()
     
     # Create a data frame with the 'season' variable
@@ -1208,8 +1217,8 @@ server <- function(input, output, session) {
     
     fig_team <- fig_team %>%
       add_trace(
-        r = colMeans(compare_radar2_team %>% select(-c(season))),
-        theta = compare_radar2_team %>% select(-c(season)) %>% colnames(.),
+        r = colMeans(compare_radar2_team %>% dplyr::select(-c(season))),
+        theta = compare_radar2_team %>% dplyr::select(-c(season)) %>% colnames(.),
         name = compare_legend,
         marker = list(color = c("#7570b3")),
         fillcolor = "rgba(117,112,179,0.3)"
@@ -1221,7 +1230,7 @@ server <- function(input, output, session) {
           radialaxis = list(
             visible = T,
             range = 
-              c(0,max(max(ceiling(max(radar_data2_team))), max(ceiling(compare_radar2_team %>% select(-c(season))))))
+              c(0,max(max(ceiling(max(radar_data2_team))), max(ceiling(compare_radar2_team %>% dplyr::select(-c(season))))))
           )
         ),
         showlegend = T,
@@ -1236,7 +1245,101 @@ server <- function(input, output, session) {
     
   })
   
+
+# LEAGUE Main panel -------------------------------------------------------
+
+  # get_all_teams_league <- function(team, df){
+  #   
+  #   get_avg_team <- function(selected_season, selected_team, data){
+  #     output_df <- data %>% 
+  #       dplyr::filter(team_name == selected_team, season == selected_season) %>%
+  #       dplyr::summarise(dunksRate = (sum(distance < 2) / nrow(.)) * 100,
+  #                        twoPointersRate = ((sum(shot_type == "three_pointer")) / (nrow(.))) * 100,
+  #                        threePointersRate = ((sum(shot_type == "two_pointer")) / (nrow(.))) * 100,
+  #                        twoPointerSuccess = ((sum(made == T 
+  #                                                  & shot_type == "two_pointer")) / (sum(shot_type == "two_pointer"))) * 100,
+  #                        threePointerSuccess = ((sum(made == T 
+  #                                                    & shot_type == "three_pointer")) / (sum(shot_type == "three_pointer"))) * 100,
+  #                        season = selected_season,
+  #                        team = selected_team)
+  #     
+  #     return(output_df)
+  #   }
+  #   
+  #   seasons <- unique(df$season)
+  #   
+  #   compare_df <- 
+  #     lapply(seasons, get_avg_team, selected_team = team, data = df) %>%
+  #     do.call(rbind, .) %>%
+  #     unnest(everything()) %>%
+  #     as.data.frame()
+  #   
+  #   return(compare_df)
+  # }  
+  # 
+   unique_teams <- unique(all_nba_data$team_name)
+  #   
+  # final_df <- 
+  #   lapply(unique_teams, get_all_teams_league, df = all_nba_data) %>%
+  #   do.call(rbind, .) %>%
+  #   unnest(everything()) %>%
+  #   as.data.frame()
+  # 
+  matrixplot_league_metric <- reactive({
+    data <- final_df %>%
+      tidyr::pivot_longer(cols = c("dunksRate", 
+                            "twoPointersRate", 
+                            "threePointersRate", 
+                            "twoPointerSuccess", 
+                            "threePointerSuccess"), 
+                   names_to = "metric", 
+                   values_to = "matric_value") %>% 
+      dplyr::filter(metric==input$matrixplot_league_metric)
+    data
+  })
   
+  output$matrixplotLeague <- renderPlot({
+   # browser()
+    
+    metric <- matrixplot_league_metric()
+     
+    
+    p <- ggplot2::ggplot(metric, aes(x = season, y = team, fill = matric_value)) + 
+      ggplot2::geom_tile(colour="white", size=1.5, stat="identity") + 
+      viridis::scale_fill_viridis(option="B") +
+       #scale_y_continuous(breaks=1:length(unique_teams), labels=unique_teams)+
+      ggplot2::xlab("") + 
+      ggplot2::ylab("") +
+      ggplot2::ggtitle(paste0("Shot evolution for all teams (", req(input$matrixplot_league_metric), ")")) +
+      ggplot2::theme(
+        plot.title = element_text(color="gray20",hjust=0,vjust=1, size=rel(2)),
+        plot.background = element_rect(fill="white"),
+        panel.background = element_rect(fill="white"),
+        panel.border = element_rect(fill=NA,color="white", size=0.5, linetype="solid"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(), 
+        axis.text = element_text(color="gray20", size=rel(1.5)),
+        axis.text.y  = element_text(hjust=1),
+        legend.text = element_text(color="gray20", size=rel(1.3)),
+        legend.background = element_rect(fill="white"),
+        legend.position = "bottom",
+        legend.title=element_blank()
+      )+ggplot2::guides(fill = guide_colourbar(barwidth = 50))
+    
+    p
+    
+     
+  }
+  )
+  
+  
+  
+  # Sorter alfabetisk
+  # Skriv værdi i brackets, men vælg font/size mm. nøjsomt (tænk på luminance)
+  # Lav legend bredere
+  # Perula color scale kan han godt lide
   
 }
 

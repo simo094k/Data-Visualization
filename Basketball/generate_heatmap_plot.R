@@ -8,7 +8,7 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
         alpha = 0) +
       stat_density_2d_filled(
         data = df_player,
-        aes(x = shotX, y = shotY, fill = ifelse(stat(density / max(density)) <=0.0075, NA, stat(density / max(density)) ) ),
+        aes(x = shotX, y = shotY, fill = stat(density / max(density)) ),
         geom = "raster", contour = FALSE, interpolate = TRUE, n = 200
       ) +
       geom_path(
