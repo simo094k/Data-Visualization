@@ -5,8 +5,8 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 library(viridis)
- library(gridExtra)
- library(dplyr)
+library(gridExtra)
+library(dplyr)
 
 source("court_plot.R")
 source("generate_scatter_plot.R")
@@ -1387,8 +1387,6 @@ server <- function(input, output, session) {
       )+ggplot2::guides(fill = guide_colourbar(barwidth = 50))
     
     p
-    
-     
   }
   )
   

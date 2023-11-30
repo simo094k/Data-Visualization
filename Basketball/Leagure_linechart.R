@@ -57,6 +57,7 @@ df_reshaped$three_pointer <- df_reshaped$three_pointer / norm_factor
 norm_factor <- df_reshaped$two_pointer[1]/100
 df_reshaped$two_pointer <- df_reshaped$two_pointer / norm_factor
 
+line_league_data <- df_reshaped
 
 
 plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
