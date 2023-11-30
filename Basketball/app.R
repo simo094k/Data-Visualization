@@ -169,8 +169,7 @@ ui <- fluidPage(
                                              plotlyOutput("line_chart")),
                                            br(), br(), 
                                            fluidRow(#style = "width:102.5%;",
-                                             column(width = 11),
-                                             column(width = 1, br(), br(), 
+                                             column(width = 1,offset = 11, br(), br(), 
                                                     prettyRadioButtons(
                                                       inputId = "radarPick",
                                                       label = NULL,
@@ -178,7 +177,8 @@ ui <- fluidPage(
                                                       outline = TRUE,
                                                       plain = TRUE,
                                                       icon = icon("basketball")
-                                                    )),
+                                                    )
+                                             ),
                                              plotlyOutput("radarplot",width = "93.2%")
                                              
                                            )
@@ -281,14 +281,14 @@ ui <- fluidPage(
                               
                               #UI related to scatter (only shown if scatter is selected)
                               uiOutput("scatter_size_sliderTeam"),
-                              uiOutput("scatter_alpha_sliderTeam")
+                             br(),br(),br(),br(),br()
                               
                               , width = 2)),
                         mainPanel(
                           br(),br(),
                           fluidRow(
                             column(width = 6, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
-                                   br(),br(),br(),
+                                   br(),br(),br(),br(),br(),br(),br(),
                                    fluidRow(
                                      #style = "width:102.5%;",
                                      plotlyOutput("scatterplot_team",width = "100%")
@@ -297,19 +297,19 @@ ui <- fluidPage(
                             column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
                                    fluidRow(#style = "width:102.5%;",
                                      plotlyOutput("line_chart_team")),
-                                   br(), br(), 
+                                    
                                    fluidRow(#style = "width:102.5%;",
-                                     column(width = 11),
-                                     column(width = 1, br(), br(), 
-                                            prettyRadioButtons(
-                                              inputId = "radarPickTeam",
-                                              label = NULL,
-                                              choices = c("League average"), selected ="League average", 
-                                              outline = TRUE,
-                                              plain = TRUE,
-                                              icon = icon("basketball")
-                                            )),
-                                     plotlyOutput("radarplot_team",width = "93.2%")
+                                     
+                                     column(width = 3,offset = 9, br(),
+                                            selectizeInput(inputId = "metricTeam", 
+                                                           choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"), 
+                                                           selected = "Three pointer rate", 
+                                                           multiple = F, 
+                                                           #selectize = F, 
+                                                           label = "Choose metric"
+                                            ),div(style = "margin-top:-40px"),
+                                            ),
+                                     plotOutput("barchartTeam",width = "100%", height = 600)
                                      
                                    )
                             )
@@ -327,18 +327,19 @@ ui <- fluidPage(
                         div(class="sidebar", style="width: 75%;",
                             sidebarPanel(
                               tags$style(".well {background-color:white;}"),
-                              htmlOutput("league", width = 50, height = 50),
-                              h5("Filters")
+                              htmlOutput("league", width = 50, height = 50)
                               
                               , width = 2)),
                         mainPanel(
-                          selectizeInput(inputId = "matrixplot_league_metric", 
-                                         choices = c("dunksRate", "twoPointersRate", "threePointersRate", "twoPointerSuccess", "threePointerSuccess"), 
-                                         selected = "threePointerSuccess", 
-                                         multiple = F, 
-                                         #selectize = F, 
-                                         label = "Choose metric"
-                          ),
+                          column(width = 2,offset = 10,
+                                 selectizeInput(inputId = "matrixplot_league_metric", 
+                                                choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"), 
+                                                selected = "Three pointer rate", 
+                                                multiple = F, 
+                                                #selectize = F, 
+                                                label = "Choose metric"
+                                 ),div(style = "margin-top:-40px"),
+                                 ),
                           plotOutput("matrixplotLeague",width = "100%", height = 600)
                         
                           
@@ -1109,141 +1110,186 @@ server <- function(input, output, session) {
   
   
   #Radar plot
-  radar_data_team <- reactive({
-    all_nba_data %>% 
-      dplyr::filter(team_name == input$selectTeam & 
-                      season %in% input$seasonsTeam) %>%
-      dplyr::summarise(dunksPerGame = sum(distance < 2) / length(unique(date)),
-                       threePointersPerGame = sum(shot_type == "three_pointer") 
-                       / length(unique(date)),
-                       twoPointersPerGame = sum(shot_type == "two_pointer") 
-                       / length(unique(date)),
-                       ShotsUnderPressurePerGame = length(
-                         quarter == "4th quarter" 
-                         & time_remaining <= 5.0 
-                         & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
-                                - as.integer(strsplit(score, "-")[[1]][2]))) <= 10)
-                       / sum(quarter == "4th quarter" 
-                             & time_remaining <= 5.0 
-                             & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
-                                    - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
-                       pointsPerGame = (2*sum(made == T 
-                                              & shot_type == "two_pointer")
-                                        + 3*sum(made == T 
-                                                & shot_type == "three_pointer"))
-                       / length(unique(date)))
-  })
+  # radar_data_team <- reactive({
+  #   all_nba_data %>% 
+  #     dplyr::filter(team_name == input$selectTeam & 
+  #                     season %in% input$seasonsTeam) %>%
+  #     dplyr::summarise(dunksPerGame = sum(distance < 2) / length(unique(date)),
+  #                      threePointersPerGame = sum(shot_type == "three_pointer") 
+  #                      / length(unique(date)),
+  #                      twoPointersPerGame = sum(shot_type == "two_pointer") 
+  #                      / length(unique(date)),
+  #                      ShotsUnderPressurePerGame = length(
+  #                        quarter == "4th quarter" 
+  #                        & time_remaining <= 5.0 
+  #                        & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
+  #                               - as.integer(strsplit(score, "-")[[1]][2]))) <= 10)
+  #                      / sum(quarter == "4th quarter" 
+  #                            & time_remaining <= 5.0 
+  #                            & (abs(as.integer(strsplit(score, "-")[[1]][1]) 
+  #                                   - as.integer(strsplit(score, "-")[[1]][2]))) <= 10),
+  #                      pointsPerGame = (2*sum(made == T 
+  #                                             & shot_type == "two_pointer")
+  #                                       + 3*sum(made == T 
+  #                                               & shot_type == "three_pointer"))
+  #                      / length(unique(date)))
+  # })
+  # 
+  # get_avg_team <- function(selected_season, data){
+  #   league_avg <- data %>%
+  #     dplyr::filter(season == selected_season) %>%
+  #     group_by(date, id_team) %>%
+  #     dplyr::summarise(
+  #       dunksPerGame = sum(distance < 2) / length(unique(team_name)),
+  #       threePointersPerGame = sum(shot_type == "three_pointer") / length(unique(team_name)),
+  #       twoPointersPerGame = sum(shot_type == "two_pointer") / length(unique(team_name)),
+  #       ShotsUnderPressurePerGame = sum(
+  #         quarter == "4th quarter" & time_remaining <= 5.0 & (abs(as.integer(strsplit(score, "-")[[1]][1]) - as.integer(strsplit(score, "-")[[1]][2]))) <= 10
+  #       ) / length(unique(team_name)),
+  #       pointsPerGame = (2*sum(made == TRUE & shot_type == "two_pointer") + (3*sum(made == TRUE & shot_type == "three_pointer"))) / length(unique(team_name))
+  #     ) %>%
+  #     ungroup() %>%
+  #     dplyr::select(-c(date, id_team)) %>%
+  #     colMeans()
+  #   
+  #   # Create a data frame with the 'season' variable
+  #   league_avg$season <- selected_season
+  #   league_avg_df <- data.frame(t(league_avg))
+  #   
+  #   return(league_avg_df)
+  # }
+  # 
+  # 
+  # team_position <- reactive({
+  #   
+  #   seasons <- unique(all_nba_data$season)
+  #   
+  #   #browser()
+  #   if(input$radarPickTeam == "League average") {
+  #     compare_legend <<- 'League Average'
+  #     compare_df <- 
+  #       lapply(seasons, get_avg_team, data = all_nba_data) %>%
+  #       do.call(rbind, .) %>%
+  #       unnest(everything()) %>%
+  #       as.data.frame()
+  #   }
+  # })
+  # 
+  # 
+  # 
+  # compare_radar_team <- reactive({
+  #   #browser()
+  #   compare_df <- team_position()
+  #   compare_df %>% filter(season %in% input$seasonsTeam) 
+  #   
+  # })
+  # 
+  # 
+  # 
+  # 
+  # output$radarplot_team<- renderPlotly({
+  #   #browser()
+  #   radar_data2_team <- radar_data_team()  %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
+  #                                                  "Three pointers" = threePointersPerGame,
+  #                                                  "Dunks" = dunksPerGame,
+  #                                                  "Points" = pointsPerGame,
+  #                                                  "Shots under pressure" = ShotsUnderPressurePerGame)
+  #   
+  #   compare_radar2_team <- compare_radar_team() %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
+  #                                                       "Three pointers" = threePointersPerGame,
+  #                                                       "Dunks" = dunksPerGame,
+  #                                                       "Points" = pointsPerGame,
+  #                                                       "Shots under pressure" = ShotsUnderPressurePerGame)
+  #   
+  #   
+  #   fig_team <- plot_ly(
+  #     type = 'scatterpolar',
+  #     fill = 'toself',
+  #     mode = 'markers'
+  #   ) 
+  #   fig_team <- fig_team %>%
+  #     add_trace(
+  #       r = unlist(radar_data2_team),
+  #       theta = colnames(radar_data2_team),
+  #       name = input$selectTeam,
+  #       marker = list(color = c("#1b9e77")),
+  #       fillcolor = "rgba(27,158,119,0.3)"
+  #     ) 
+  #   
+  #   fig_team <- fig_team %>%
+  #     add_trace(
+  #       r = colMeans(compare_radar2_team %>% dplyr::select(-c(season))),
+  #       theta = compare_radar2_team %>% dplyr::select(-c(season)) %>% colnames(.),
+  #       name = compare_legend,
+  #       marker = list(color = c("#7570b3")),
+  #       fillcolor = "rgba(117,112,179,0.3)"
+  #     )
+  #   fig_team <- fig_team %>%
+  #     layout(
+  #       title = list(text="Shot attempts per game", x=0.52),
+  #       polar = list(
+  #         radialaxis = list(
+  #           visible = T,
+  #           range = 
+  #             c(0,max(max(ceiling(max(radar_data2_team))), max(ceiling(compare_radar2_team %>% dplyr::select(-c(season))))))
+  #         )
+  #       ),
+  #       showlegend = T,
+  #       legend = list(orientation = "h",   # show entries horizontally
+  #                     xanchor = "center",  # use center of legend as anchor
+  #                     x = 0.5),
+  #       margin = list(t=90, pad=20)
+  #     )%>%
+  #     config(displayModeBar = FALSE)
+  #   
+  #   fig_team
+  #   
+  # })
   
-  get_avg_team <- function(selected_season, data){
-    league_avg <- data %>%
-      dplyr::filter(season == selected_season) %>%
-      group_by(date, id_team) %>%
-      dplyr::summarise(
-        dunksPerGame = sum(distance < 2) / length(unique(team_name)),
-        threePointersPerGame = sum(shot_type == "three_pointer") / length(unique(team_name)),
-        twoPointersPerGame = sum(shot_type == "two_pointer") / length(unique(team_name)),
-        ShotsUnderPressurePerGame = sum(
-          quarter == "4th quarter" & time_remaining <= 5.0 & (abs(as.integer(strsplit(score, "-")[[1]][1]) - as.integer(strsplit(score, "-")[[1]][2]))) <= 10
-        ) / length(unique(team_name)),
-        pointsPerGame = (2*sum(made == TRUE & shot_type == "two_pointer") + (3*sum(made == TRUE & shot_type == "three_pointer"))) / length(unique(team_name))
-      ) %>%
-      ungroup() %>%
-      dplyr::select(-c(date, id_team)) %>%
-      colMeans()
-    
-    # Create a data frame with the 'season' variable
-    league_avg$season <- selected_season
-    league_avg_df <- data.frame(t(league_avg))
-    
-    return(league_avg_df)
-  }
   
-  
-  team_position <- reactive({
-    
-    seasons <- unique(all_nba_data$season)
-    
-    #browser()
-    if(input$radarPickTeam == "League average") {
-      compare_legend <<- 'League Average'
-      compare_df <- 
-        lapply(seasons, get_avg_team, data = all_nba_data) %>%
-        do.call(rbind, .) %>%
-        unnest(everything()) %>%
-        as.data.frame()
-    }
-  })
-  
+  df_barchart <- reactive({
+    final_df%>% dplyr::rename("Dunk rate" = "dunksRate",
+                              "Two pointer rate" = "twoPointersRate",
+                              "Three pointer rate" = "threePointersRate",
+                              "Two pointer success rate" = "twoPointerSuccess",
+                              "Three pointer success rate" = "threePointerSuccess") %>%
+      tidyr::pivot_longer(cols = c("Dunk rate", 
+                                   "Two pointer rate", 
+                                   "Three pointer rate", 
+                                   "Two pointer success rate", 
+                                   "Three pointer success rate"), 
+                          names_to = "metric", 
+                          values_to = "matric_value") %>% 
+      dplyr::filter(season %in% input$seasonsTeam & 
+                      metric==input$metricTeam) %>%
+      group_by(team) %>%
+      summarize(avg_metric_value = mean(matric_value)) %>%
+      mutate(choosen_team=ifelse(team==input$selectTeam, "1", "0"))%>% 
+      mutate(avg_metric_value_minus_mean = avg_metric_value - mean(avg_metric_value))
 
-  
-  compare_radar_team <- reactive({
-    #browser()
-    compare_df <- team_position()
-    compare_df %>% filter(season %in% input$seasonsTeam) 
-    
   })
   
   
   
   
-  output$radarplot_team<- renderPlotly({
-    #browser()
-    radar_data2_team <- radar_data_team()  %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
-                                                   "Three pointers" = threePointersPerGame,
-                                                   "Dunks" = dunksPerGame,
-                                                   "Points" = pointsPerGame,
-                                                   "Shots under pressure" = ShotsUnderPressurePerGame)
+  
+  
+  output$barchartTeam <- renderPlot({
+    data <- df_barchart()
     
-    compare_radar2_team <- compare_radar_team() %>% dplyr::rename("Two pointers" = twoPointersPerGame, 
-                                                        "Three pointers" = threePointersPerGame,
-                                                        "Dunks" = dunksPerGame,
-                                                        "Points" = pointsPerGame,
-                                                        "Shots under pressure" = ShotsUnderPressurePerGame)
-    
-    
-    fig_team <- plot_ly(
-      type = 'scatterpolar',
-      fill = 'toself',
-      mode = 'markers'
-    ) 
-    fig_team <- fig_team %>%
-      add_trace(
-        r = unlist(radar_data2_team),
-        theta = colnames(radar_data2_team),
-        name = input$selectTeam,
-        marker = list(color = c("#1b9e77")),
-        fillcolor = "rgba(27,158,119,0.3)"
-      ) 
-    
-    fig_team <- fig_team %>%
-      add_trace(
-        r = colMeans(compare_radar2_team %>% dplyr::select(-c(season))),
-        theta = compare_radar2_team %>% dplyr::select(-c(season)) %>% colnames(.),
-        name = compare_legend,
-        marker = list(color = c("#7570b3")),
-        fillcolor = "rgba(117,112,179,0.3)"
-      )
-    fig_team <- fig_team %>%
-      layout(
-        title = list(text="Shot attempts per game", x=0.52),
-        polar = list(
-          radialaxis = list(
-            visible = T,
-            range = 
-              c(0,max(max(ceiling(max(radar_data2_team))), max(ceiling(compare_radar2_team %>% dplyr::select(-c(season))))))
-          )
-        ),
-        showlegend = T,
-        legend = list(orientation = "h",   # show entries horizontally
-                      xanchor = "center",  # use center of legend as anchor
-                      x = 0.5),
-        margin = list(t=90, pad=20)
-      )%>%
-      config(displayModeBar = FALSE)
-    
-    fig_team
-    
+    ggplot2::ggplot(data =data, 
+                    mapping = aes(x = forcats::fct_reorder(team, avg_metric_value_minus_mean), y = avg_metric_value_minus_mean, fill=choosen_team#, text = paste0(Area, "\n", Time, ": ", Value)
+                    ))+
+      geom_bar(stat="identity", alpha=.6) +
+      coord_flip()+
+      scale_x_discrete(name ="",  position = "bottom")+
+      ggplot2::ggtitle(paste0(req(input$selectTeam)," compared to league average for the metric: ", input$metricTeam)) +
+      ggplot2::ylab("Point percentage differences to the mean")+
+      scale_fill_manual( values = c( "1"="red", "0"="#6495ed" ), guide="none" ) +
+      ggthemes::theme_hc()+ ggthemes::scale_colour_hc()
   })
+  
+  
   
 
 # LEAGUE Main panel -------------------------------------------------------
@@ -1286,16 +1332,21 @@ server <- function(input, output, session) {
   #   as.data.frame()
   # 
   matrixplot_league_metric <- reactive({
-    data <- final_df %>%
-      tidyr::pivot_longer(cols = c("dunksRate", 
-                            "twoPointersRate", 
-                            "threePointersRate", 
-                            "twoPointerSuccess", 
-                            "threePointerSuccess"), 
+    final_df %>%
+      dplyr::rename("Dunk rate" = "dunksRate",
+                    "Two pointer rate" = "twoPointersRate",
+                    "Three pointer rate" = "threePointersRate",
+                    "Two pointer success rate" = "twoPointerSuccess",
+                    "Three pointer success rate" = "threePointerSuccess") %>%
+      tidyr::pivot_longer(cols = c("Dunk rate", 
+                                   "Two pointer rate", 
+                                   "Three pointer rate", 
+                                   "Two pointer success rate", 
+                                   "Three pointer success rate"), 
                    names_to = "metric", 
                    values_to = "matric_value") %>% 
-      dplyr::filter(metric==input$matrixplot_league_metric)
-    data
+      dplyr::filter(metric==input$matrixplot_league_metric) 
+    
   })
   
   output$matrixplotLeague <- renderPlot({
@@ -1304,7 +1355,7 @@ server <- function(input, output, session) {
     metric <- matrixplot_league_metric()
      
     
-    p <- ggplot2::ggplot(metric, aes(x = season, y = team, fill = matric_value)) + 
+    p <- ggplot2::ggplot(metric, aes(x = season, y = factor(team,levels = rev(sort(unique(team)))), fill = matric_value)) + 
       ggplot2::geom_tile(colour="white", size=1.5, stat="identity") + 
       viridis::scale_fill_viridis(option="B") +
        #scale_y_continuous(breaks=1:length(unique_teams), labels=unique_teams)+
