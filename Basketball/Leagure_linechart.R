@@ -60,6 +60,11 @@ df_reshaped$two_pointer <- df_reshaped$two_pointer / norm_factor
 line_league_data <- df_reshaped
 
 
+
+rm(df, df_data, df_dunks, df_reshaped, all_combinations, norm_factor)
+
+
+
 plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
                 type = "scatter", mode = "lines+markers", name = "Two pointer",
                 line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
@@ -82,6 +87,9 @@ plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks",
 plot
 
 
+
+
+# save(list = ls(), file = "data/basketball.RData")
 
 # ---- FOR ONLY MADE SHOTS:
 
