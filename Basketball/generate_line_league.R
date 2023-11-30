@@ -6,19 +6,19 @@ create_leauge_line <- function(data, source=NULL){
                   line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
                   showlegend = TRUE, source = source, 
                   marker = list(color = c("#7570b3")),
-                  text = paste("Average amount of two point shots", "<br>", "made per game"))
+                  text = paste("Average amount of two point shots", "<br>", "tried per game"))
   
   plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
                              line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
                              showlegend = is.numeric(df_reshaped[["three_pointer"]]), 
                              marker = list(color = c("#d95f02")),
-                             text = paste("Average amount of three point shots", "<br>", "made per game"))
+                             text = paste("Average amount of three point shots", "<br>", "tried per game"))
   
   plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
                              line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
                              showlegend = is.numeric(df_reshaped[["dunks"]]), 
                              marker = list(color = c("#1b9e77")),
-                             text = paste("Average amount of dunks", "<br>", "made per game"))
+                             text = paste("Average amount of dunks", "<br>", "tried per game"))
   
   return(plot)
 }
