@@ -386,6 +386,8 @@ ui <- fluidPage(
                                  ),
                           plotOutput("matrixplotLeague",width = "100%", height = 600),
                           br(),
+                          br(),
+                          br(),
                           column(width = 12,
                                  plotlyOutput("linechart_league",width = "100%", height = 600)
                                  )
