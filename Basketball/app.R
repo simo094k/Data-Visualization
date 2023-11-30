@@ -12,6 +12,8 @@ source("court_plot.R")
 source("generate_scatter_plot.R")
 source("generate_heatmap_plot.R")
 source("generate_linechart_plot.R")
+source("generate_line_league.R")
+
 
 dict <<- list("0" = "two_pointer", "1" = "three_pointer", "2" = "two_pointer", "3" = "NULL")
 change_names <<- list("2-pointer" = "two_pointer",
@@ -339,8 +341,12 @@ ui <- fluidPage(
                                          #selectize = F, 
                                          label = "Choose metric"
                           ),
-                          plotOutput("matrixplotLeague",width = "100%", height = 600)
-                        
+                          plotOutput("matrixplotLeague",width = "100%", height = 600),
+                          br(),
+                          column(width = 12,
+                                 plotlyOutput("linechart_league",width = "100%", height = 600)
+                                 )
+                         
                           
                           , width = 10)
                       ))
@@ -570,7 +576,8 @@ server <- function(input, output, session) {
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5, y = -0.15),
       title = "Average shot success per game",
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -613,7 +620,6 @@ server <- function(input, output, session) {
       
       # 2 = dunks
       # 1 = three_pointer
-      #browser()
       
       if(2 %in% curves & not(1 %in% curves)){  # we have all 2-pointers
         if(all(curves == 2)){  # dunks
@@ -664,14 +670,15 @@ server <- function(input, output, session) {
         plot <- create_linechart(data=selected_data, sel_season=input$seasons,
                                  source="line_trace")
         plot <- plot %>% layout(
-          xaxis = list(title = F),
-          yaxis = list(title = "Number of Shots Made"),
+          xaxis = list(title = list(text="Season", standoff=11)),
+          yaxis = list(title = list(text="Number of shots made", standoff=11)),
           legend = list(title = "Shot Type",
                         orientation = "h",   # show entries horizontally
                         xanchor = "center",  # use center of legend as anchor
-                        x = 0.5),
+                        x = 0.5, y = -0.15),
           title = "Average shot success per game",
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
@@ -958,7 +965,8 @@ server <- function(input, output, session) {
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5, y = -0.15),
       title = "Average shot success per game",
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -1052,14 +1060,15 @@ server <- function(input, output, session) {
         plot <- create_linechart(data=selected_data_team, sel_season=input$seasonsTeam,
                                  source="line_trace")
         plot <- plot %>% layout(
-          xaxis = list(title = F),
-          yaxis = list(title = "Number of Shots Made"),
+          xaxis = list(title = list(text="Season", standoff=11)),
+          yaxis = list(title = list(text="Number of shots made", standoff=11)),
           legend = list(title = "Shot Type",
                         orientation = "h",   # show entries horizontally
                         xanchor = "center",  # use center of legend as anchor
-                        x = 0.5),
+                        x = 0.5, y = -0.15),
           title = "Average shot success per game",
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
@@ -1334,6 +1343,22 @@ server <- function(input, output, session) {
   }
   )
   
+  
+  output$linechart_league <- plotly::renderPlotly({
+    plot <- create_leauge_line(data=line_league_data)
+    plot <- plot %>% layout(
+      xaxis = list(title = list(text="Season", standoff=11)),
+      yaxis = list(title = list(text="Development in indexed amount shots tried", standoff=11)),
+      legend = list(title = "Shot Type",
+                    orientation = "h",   # show entries horizontally
+                    xanchor = "center",  # use center of legend as anchor
+                    x = 0.5, y = -0.10),
+      title = "",
+      clickmode = "event+select",
+      showlegend = TRUE
+    )
+    plot
+  })
   
   
   # Sorter alfabetisk

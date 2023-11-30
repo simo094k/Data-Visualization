@@ -59,28 +59,81 @@ create_linechart <- function(data, sel_season, source=NULL){
   df_reshaped <- df_reshaped %>% dplyr::mutate(all_season = FALSE)
   
   
-  plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
-                  type = "scatter", mode = "lines+markers", name = "Two pointer",
-                  line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
-                  showlegend = TRUE, source = source, 
-                  marker = list(color = c("#7570b3")),
-                  text = paste("Average amount of two point shots", "<br>", "made per game"))
+  #browser()
+  # This is broken code - but should work
   
-  plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
-                             line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
-                             showlegend = TRUE, 
-                             marker = list(color = c("#d95f02")),
-                             text = paste("Average amount of three point shots", "<br>", "made per game"))
-  
-  plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
-                             line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
-                             showlegend = TRUE, 
-                             marker = list(color = c("#1b9e77")),
-                             text = paste("Average amount of dunks", "<br>", "made per game"))
-  
-  plot <- plot %>% add_trace(y = df_reshaped[["all_season"]],
-                             line = list(dash = "dash"), connectgaps = F,
-                             showlegend = FALSE)
+  if(is.numeric(df_reshaped[["two_pointer"]])){
+    plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
+                    type = "scatter", mode = "lines+markers", name = "Two pointer",
+                    line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
+                    showlegend = TRUE, source = source, 
+                    marker = list(color = c("#7570b3")),
+                    text = paste("Average amount of two point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
+                               line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["three_pointer"]]), 
+                               marker = list(color = c("#d95f02")),
+                               text = paste("Average amount of three point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
+                               line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["dunks"]]), 
+                               marker = list(color = c("#1b9e77")),
+                               text = paste("Average amount of dunks", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["all_season"]],
+                               line = list(dash = "dash"), connectgaps = F,
+                               showlegend = FALSE)
+  }
+  else if(is.numeric(df_reshaped[["three_pointer"]])){
+    plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["three_pointer"]], 
+                    type = "scatter", mode = "lines+markers", name = "Three pointer",
+                    line = list(dash = "dash", color = c("#d95f02")), connectgaps = TRUE,
+                    showlegend = TRUE, source = source, 
+                    marker = list(color = c("#d95f02")),
+                    text = paste("Average amount of three point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["two_pointer"]], name = "Two pointer", 
+                               line = list(dash = "dash", color = c("#7570b3")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["two_pointer"]]), 
+                               marker = list(color = c("#7570b3")),
+                               text = paste("Average amount of two point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
+                               line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["dunks"]]), 
+                               marker = list(color = c("#1b9e77")),
+                               text = paste("Average amount of dunks", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["all_season"]],
+                               line = list(dash = "dash"), connectgaps = F,
+                               showlegend = FALSE)
+  }
+  else{
+    plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["dunks"]], 
+                    type = "scatter", mode = "lines+markers", name = "Dunks",
+                    line = list(dash = "dash", color = c("#1b9e77")), connectgaps = TRUE,
+                    showlegend = TRUE, source = source, 
+                    marker = list(color = c("#1b9e77")),
+                    text = paste("Average amount of dunks", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
+                               line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["three_pointer"]]), 
+                               marker = list(color = c("#d95f02")),
+                               text = paste("Average amount of three point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["two_pointer"]], name = "Two pointer", 
+                               line = list(dash = "dash", color = c("#7570b3")), connectgaps = T,
+                               showlegend = is.numeric(df_reshaped[["two_pointer"]]), 
+                               marker = list(color = c("#7570b3")),
+                               text = paste("Average amount of two point shots", "<br>", "made per game"))
+    
+    plot <- plot %>% add_trace(y = df_reshaped[["all_season"]],
+                               line = list(dash = "dash"), connectgaps = F,
+                               showlegend = FALSE)
+  }
   
   return(plot)
 }
