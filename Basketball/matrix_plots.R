@@ -11,8 +11,8 @@ get_all_teams <- function(team, df){
     output_df <- data %>% 
       dplyr::filter(team_name == selected_team, season == selected_season) %>%
       dplyr::summarise(dunksRate = (sum(distance < 2) / nrow(.)) * 100,
-                       twoPointersRate = ((sum(shot_type == "three_pointer")) / (nrow(.))) * 100,
-                       threePointersRate = ((sum(shot_type == "two_pointer")) / (nrow(.))) * 100,
+                       twoPointersRate = ((sum(shot_type == "two_pointer")) / (nrow(.))) * 100,
+                       threePointersRate = ((sum(shot_type == "three_pointer")) / (nrow(.))) * 100,
                        twoPointerSuccess = ((sum(made == T 
                                               & shot_type == "two_pointer")) / (sum(shot_type == "two_pointer"))) * 100,
                        threePointerSuccess = ((sum(made == T 
