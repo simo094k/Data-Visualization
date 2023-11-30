@@ -5,13 +5,15 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 library(viridis)
- library(gridExtra)
- library(dplyr)
+library(gridExtra)
+library(dplyr)
 
 source("court_plot.R")
 source("generate_scatter_plot.R")
 source("generate_heatmap_plot.R")
 source("generate_linechart_plot.R")
+source("generate_line_league.R")
+
 
 dict <<- list("0" = "two_pointer", "1" = "three_pointer", "2" = "two_pointer", "3" = "NULL")
 change_names <<- list("2-pointer" = "two_pointer",
@@ -382,9 +384,11 @@ ui <- fluidPage(
                                                 label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric")
                                  ),div(style = "margin-top:-40px"),
                                  ),
-                          plotOutput("matrixplotLeague",width = "100%", height = 600)
-                        
-                          
+                          plotOutput("matrixplotLeague",width = "100%", height = 600),
+                          br(),
+                          column(width = 12,
+                                 plotlyOutput("linechart_league",width = "100%", height = 600)
+                                 )
                           , width = 10)
                       ))
              
@@ -615,7 +619,8 @@ server <- function(input, output, session) {
                     font = list(size=dropdown_size_filters)),
       title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -658,7 +663,6 @@ server <- function(input, output, session) {
       
       # 2 = dunks
       # 1 = three_pointer
-      #browser()
       
       if(2 %in% curves & not(1 %in% curves)){  # we have all 2-pointers
         if(all(curves == 2)){  # dunks
@@ -718,7 +722,8 @@ server <- function(input, output, session) {
                         font = list(size=dropdown_size_filters)),
           title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
@@ -1013,7 +1018,8 @@ server <- function(input, output, session) {
                     font = list(size=dropdown_size_filters)),
       title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -1116,7 +1122,8 @@ server <- function(input, output, session) {
                         font = list(size=dropdown_size_filters)),
           title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
@@ -1454,6 +1461,22 @@ server <- function(input, output, session) {
   }
   )
   
+  
+  output$linechart_league <- plotly::renderPlotly({
+    plot <- create_leauge_line(data=line_league_data)
+    plot <- plot %>% layout(
+      xaxis = list(title = list(text="Season", standoff=11)),
+      yaxis = list(title = list(text="Development in indexed amount shots tried", standoff=11)),
+      legend = list(title = "Shot Type",
+                    orientation = "h",   # show entries horizontally
+                    xanchor = "center",  # use center of legend as anchor
+                    x = 0.5, y = -0.10),
+      title = "",
+      clickmode = "event+select",
+      showlegend = TRUE
+    )
+    plot
+  })
   
   
   # Sorter alfabetisk
