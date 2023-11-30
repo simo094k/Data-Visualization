@@ -1,10 +1,11 @@
 create_linechart <- function(data, sel_season, source=NULL){
   
   df <- data %>%
+    dplyr::filter(made == T) %>%
     dplyr::group_by(season, shot_type) %>%
     dplyr::summarise(num_shot = n(), num_games = length(unique(date))) 
   
-  df_dunks <- data %>% dplyr::filter(distance < 2) %>% 
+  df_dunks <- data %>% dplyr::filter((distance < 2) & (made == T)) %>% 
     dplyr::group_by(season, shot_type) %>%
     dplyr::summarise(num_shot = as.numeric(n()), 
                      num_games = as.numeric(length(unique(date)))) %>%
