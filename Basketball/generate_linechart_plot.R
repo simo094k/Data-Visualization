@@ -1,16 +1,16 @@
 create_linechart <- function(data, sel_season, source=NULL){
   
-  #browser()
   df <- data %>%
     dplyr::group_by(season, shot_type) %>%
     dplyr::summarise(num_shot = n(), num_games = length(unique(date))) 
   
-  df_dunks <- data %>% filter(distance < 2) %>% 
+  df_dunks <- data %>% dplyr::filter(distance < 2) %>% 
     dplyr::group_by(season, shot_type) %>%
-    dplyr::summarise(num_shot = n(), num_games = length(unique(date))) %>%
+    dplyr::summarise(num_shot = as.numeric(n()), 
+                     num_games = as.numeric(length(unique(date)))) %>%
     dplyr::mutate(shot_type = ifelse(shot_type == "two_pointer", "dunks", shot_type))
   
-  df <- rbind(df, df_dunks)
+  if(nrow(df_dunks)>0){df<-rbind(df, df_dunks)}
   
   all_combinations <- expand.grid(season = sel_season, 
                                   shot_type = c("dunks", "two_pointer", 
@@ -60,19 +60,19 @@ create_linechart <- function(data, sel_season, source=NULL){
   
   
   plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
-                  type = "scatter", mode = "lines+markers", name = "two_pointer",
+                  type = "scatter", mode = "lines+markers", name = "Two pointer",
                   line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
                   showlegend = TRUE, source = source, 
                   marker = list(color = c("#7570b3")),
                   text = paste("Average amount of two point shots", "<br>", "made per game"))
   
-  plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "three_pointer", 
+  plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
                              line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
                              showlegend = TRUE, 
                              marker = list(color = c("#d95f02")),
                              text = paste("Average amount of three point shots", "<br>", "made per game"))
   
-  plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "dunks", 
+  plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
                              line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
                              showlegend = TRUE, 
                              marker = list(color = c("#1b9e77")),
