@@ -333,21 +333,22 @@ ui <- fluidPage(
                               
                               , width = 2)),
                         mainPanel(
-                          selectizeInput(inputId = "matrixplot_league_metric", 
-                                         choices = c("dunksRate", "twoPointersRate", "threePointersRate", "twoPointerSuccess", "threePointerSuccess"), 
-                                         selected = "threePointerSuccess", 
-                                         multiple = F, 
-                                         #selectize = F, 
-                                         label = "Choose metric"
-                          ),
+                          column(width = 2,offset = 10,
+                                 selectizeInput(inputId = "matrixplot_league_metric",
+                                                choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"),
+                                                selected = "Three pointer rate",
+                                                multiple = F,
+                                                #selectize = F,
+                                                label = "Choose metric"
+                                 ),div(style = "margin-top:-40px"),
+                                 ),
                           plotOutput("matrixplotLeague",width = "100%", height = 600),
+                          br(),
+                          br(),
                           br(),
                           column(width = 12,
                                  plotlyOutput("linechart_league",width = "100%", height = 600)
-                                 )
-                         
-                          
-                          , width = 10)
+                          ), width = 10)
                       ))
              
   ))
