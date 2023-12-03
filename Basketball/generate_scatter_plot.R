@@ -14,7 +14,7 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
             legend.position = c(.95, .95),
             legend.justification = c("center", "bottom"),
             legend.box.just = "center",
-            legend.margin = margin(6, 6, 6, 6)) , source = source, width = 975, height = 1025)%>%
+            legend.margin = margin(6, 6, 6, 6)) , source = source, width = 1025, height = 1050)%>%
     layout(
            legend = list(
       'rgba(0,0,0,0)', 
@@ -22,8 +22,8 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
       xanchor = "center",  # use center of legend as anchor
       x = 0.5, y=0.17,
       title=list(text='', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
-      bgcolor = 'rgba(0,0,0,0)'
-      #font = list(size=2)
+      bgcolor = 'rgba(0,0,0,0)',
+      font = list(size=20)
     ),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
     )%>%

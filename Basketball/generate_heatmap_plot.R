@@ -17,25 +17,33 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
         color = court_theme$lines
       ) +
       #scale_fill_distiller(palette=4, direction=1) +
-      scale_fill_viridis_c(
-        "",
-        limits = c(0, 1),
-        breaks = c(0, 1),
-        labels = c("Low", "High"),
-        option = "inferno",
-        #option = "magna",
-        guide = guide_colorbar(barwidth = 15),
-        trans = "sqrt",na.value = "white"
-      ) +
-      theme(
-        legend.text = element_text(size = rel(1.0)) 
-      ),width = 950, height = 975, source=source)%>%
+      scale_fill_gradientn("",
+                           colours=pals::parula(100), 
+                           guide_colorbar(barwidth = 15),
+                           trans = "sqrt",
+                           labels = c("Low", "High"),
+                           breaks = c(0, 1),
+                           limits = c(0, 1)
+                           )+
+      # scale_fill_viridis_c(
+      #   "",
+      #  # limits = c(0, 1),
+      #   #breaks = c(0, 1),
+      #   labels = c("Low", "High"),
+      #   option = "inferno",
+      #   #option = "magna",
+      #   guide = guide_colorbar(barwidth = 15)
+      #   #trans = "sqrt",na.value = "white"
+      # ) +
+      theme(title = element_text(size=30),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 18) 
+      ),width = 1025, height = 1050, source=source)%>%
     layout(
-    #   legend = list(
-    #   #orientation = "h",
-    #   bgcolor = 'rgba(0,0,0,0)'
-    # ),
-    title=list(text='Shot frequency', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top'),
+      legend = list(
+      bgcolor = 'rgba(0,0,0,0)'
+    ),
+    title=list(text='Shot frequency', y = 0.95, x = 0.5, xanchor = 'center', yanchor =  'top', font = list(size=25)),
     xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE)
     )%>%
     config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", "toImage", "hoverClosestGl2d", "hoverCompareCartesian", "hoverClosestCartesian"))

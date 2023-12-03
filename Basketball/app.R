@@ -32,13 +32,17 @@ change_names <<- list("2-pointer" = "two_pointer",
 
 
 # UI ----------------------------------------------------------------------
-
+#Label-size for the filters:
+label_size_filters <- 22
+dropdown_size_filters <- 20
 
 ui <- fluidPage(
   tags$style(HTML("
           .navbar .navbar-header {float: left; width:15% }
-          .navbar .navbar-nav {float: left; }
+          .navbar .navbar-nav {float: left; font-size:30px; margin:5px}
           .container {min-width: 1250} 
+          .navbar-brand {font-size:40px; height: 60px; padding-left:35px
+          a#sidebar_button {padding-left:15}}
           
           
         #   .option[data-value=made], .item[data-value=made]{
@@ -51,6 +55,28 @@ ui <- fluidPage(
         # }
         ")
   ),
+  tags$head(tags$style('
+   body {
+      font-family: Arial; 
+      font-size: 40px:
+      fint-style:bold;
+      
+   }'
+  )),
+  tags$style(type='text/css', 
+             paste0(".selectize-input { font-size: ",label_size_filters,"px; line-height: ",label_size_filters,"px;} 
+             .selectize-dropdown { font-size: ",dropdown_size_filters,"px; line-height: ",dropdown_size_filters,"px; }
+             .picker-input { font-size: ",label_size_filters,"px; line-height: ",label_size_filters,"px;}
+             .slider-input  { font-size: ",label_size_filters,"px; line-height: ",label_size_filters,"px;}
+             .my-class {font-size: ",label_size_filters,"px; line-height: ",label_size_filters,"px;}
+             .irs--shiny .irs-min, .irs--shiny .irs-max {font-size: ",label_size_filters,"px;}
+             .irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single {font-size: ",label_size_filters-4,"px;}
+             .irs--shiny .irs-handle {top:20px; width:17px: height: 17px;}
+             .btn {font-size: 20px}
+              .pretty .state label, .pretty .state label {font-size:larger}
+              .col-sm-10 {width: 87.5%}
+              .fa, .fa-brands, .fa-classic, .fa-regular, .fa-sharp, .fa-solid, .fab, .far, .fas {line-height:0.9}")),
+  
   shinyjs::useShinyjs(),
   navbarPage(title = tagList(("HoopViz"),
                              actionLink(inputId = "sidebar_button",
@@ -76,7 +102,7 @@ ui <- fluidPage(
                                           label = NULL, 
                                           selectize = T),
                               #br(),
-                              h5("Filters"),
+                              h2("Filters"),
                               
                               pickerInput(inputId = "seasons", 
                                           choices = all_nba_data %>% 
@@ -85,10 +111,13 @@ ui <- fluidPage(
                                           selected = "2020/21", 
                                           multiple = T, 
                                           #selectize = F, 
-                                          label = "Seasons",
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Seasons"),
                                           options = list(`actions-box` = TRUE, 
                                                          "style-base" = "form-control", 
-                                                         style = "")
+                                                         style = "my-class"),
+                                          choicesOpt = list(
+                                            style = rep_len(paste0("font-size: ",label_size_filters,"px; line-height: ",1,";"), 10)
+                                          ) # choices style
                               ),
                               
                               pickerInput(inputId = "quarters", 
@@ -98,10 +127,14 @@ ui <- fluidPage(
                                           selected = "1st quarter", 
                                           multiple = T, 
                                           #selectize = F, 
-                                          label = "Game period",
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Game period"),
                                           options = list(`actions-box` = TRUE, 
                                                          "style-base" = "form-control", 
-                                                         style = "")
+                                                         style = "my-class"),
+                                          choicesOpt = list(
+                                            style = rep_len(paste0("font-size: ",label_size_filters,"px; line-height: ",1,";"), 5)
+                                          ) # choices style
+                                          
                               ),
                               
                               sliderInput(inputId = "timeRemaining",
@@ -110,7 +143,7 @@ ui <- fluidPage(
                                           value = c(0,12),
                                           step = 0.5,
                                           ticks = F, 
-                                          label = "Time remaining in quarter (min)"),
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Time remaining in quarter (min)")),
                               
                               sliderInput(inputId = "distanceToRim",
                                           min = 0.0,
@@ -118,7 +151,7 @@ ui <- fluidPage(
                                           value = c(0,39),
                                           step = 1.0,
                                           ticks = F,
-                                          label = "Shot distance to basket (ft)"),
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Shot distance to basket (ft)")),
                               
                               
                               selectizeInput(inputId = "gamestatus", 
@@ -128,7 +161,7 @@ ui <- fluidPage(
                                              selected = c("trails", "tied", "leads"), 
                                              multiple = T, 
                                              #selectize = F, 
-                                             label = "Game status"
+                                             label = div(style = paste0("font-size:",label_size_filters,"px"),"Game status")
                               ),
                               
                               # selectizeInput(inputId = "made", 
@@ -140,10 +173,10 @@ ui <- fluidPage(
                               # ),
                               
                               radioGroupButtons(inputId = "charttype",
-                                                label = "Court type", 
+                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Court type"), 
                                                 choices = c("Dot Map", "Heat Map"), 
                                                 selected = "Dot Map",
-                                                size = "sm", 
+                                                size = "normal", 
                                                 justified = T,
                                                 checkIcon = list(
                                                   yes = icon("square-check"),
@@ -161,25 +194,28 @@ ui <- fluidPage(
                                            br(),br(),br(),
                                            fluidRow(
                                              #style = "width:102.5%;",
-                                             plotlyOutput("scatterplot",width = "100%")
+                                             plotlyOutput("scatterplot",width = "110%")
                                            ),br(),br()
                                     ),
-                                    column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
-                                           fluidRow(#style = "width:102.5%;",
-                                             plotlyOutput("line_chart")),
+                                    column(width=6,offset = 0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+                                           fluidRow(#style = "width:102.5%;", 
+                                             plotlyOutput("line_chart"),
+                                             ),
                                            br(), br(), 
+                                           
                                            fluidRow(#style = "width:102.5%;",
-                                             column(width = 1,offset = 11, br(), br(), 
+                                             column(width = 2,offset = 10, br(), br(), 
                                                     prettyRadioButtons(
                                                       inputId = "radarPick",
                                                       label = NULL,
                                                       choices = c("Position average", "League average"), selected ="Position average", 
                                                       outline = TRUE,
                                                       plain = TRUE,
-                                                      icon = icon("basketball")
+                                                      icon = tags$i(icon("basketball",style="font-size: 24px"))
+                                                      
                                                     )
                                              ),
-                                             plotlyOutput("radarplot",width = "93.2%")
+                                             plotlyOutput("radarplot",width = "110%")
                                              
                                            )
                                     )
@@ -205,7 +241,7 @@ ui <- fluidPage(
                                           label = NULL, 
                                           selectize = T),
                               #br(),
-                              #Filters
+                              h2("Filters"),
                               pickerInput(inputId = "seasonsTeam", 
                                           choices = all_nba_data %>% 
                                             dplyr::select(season)%>%
@@ -213,10 +249,13 @@ ui <- fluidPage(
                                           selected = "2020/21", 
                                           multiple = T, 
                                           #selectize = F, 
-                                          label = "Seasons",
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Seasons"),
                                           options = list(`actions-box` = TRUE, 
                                                          "style-base" = "form-control", 
-                                                         style = "")
+                                                         style = "my-class"),
+                                          choicesOpt = list(
+                                            style = rep_len(paste0("font-size: ",label_size_filters,"px; line-height: ",1,";"), 10)
+                                          ) # choices style
                               ),
                               
                               pickerInput(inputId = "quartersTeam", 
@@ -226,10 +265,13 @@ ui <- fluidPage(
                                           selected = "1st quarter", 
                                           multiple = T, 
                                           #selectize = F, 
-                                          label = "Game period",
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Game period"),
                                           options = list(`actions-box` = TRUE, 
                                                          "style-base" = "form-control", 
-                                                         style = "")
+                                                         style = "my-class"),
+                                          choicesOpt = list(
+                                            style = rep_len(paste0("font-size: ",label_size_filters,"px; line-height: ",1,";"), 10)
+                                          ) # choices style
                               ),
                               
                               sliderInput(inputId = "timeRemainingTeam",
@@ -238,7 +280,7 @@ ui <- fluidPage(
                                           value = c(0,12),
                                           step = 0.5,
                                           ticks = F, 
-                                          label = "Time remaining in quarter (min)"),
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Time remaining in quarter (min)")),
                               
                               sliderInput(inputId = "distanceToRimTeam",
                                           min = 0.0,
@@ -246,7 +288,7 @@ ui <- fluidPage(
                                           value = c(0,39),
                                           step = 1.0,
                                           ticks = F,
-                                          label = "Shot distance to basket (ft)"),
+                                          label = div(style = paste0("font-size:",label_size_filters,"px"),"Shot distance to basket (ft)")),
                               
                               
                               selectizeInput(inputId = "gamestatusTeam", 
@@ -256,7 +298,7 @@ ui <- fluidPage(
                                              selected = c("trails", "tied", "leads"), 
                                              multiple = T, 
                                              #selectize = F, 
-                                             label = "Game status"
+                                             label = div(style = paste0("font-size:",label_size_filters,"px"),"Game status")
                               ),
                               
                               # selectizeInput(inputId = "made", 
@@ -268,10 +310,10 @@ ui <- fluidPage(
                               # ),
                               
                               radioGroupButtons(inputId = "charttypeTeam",
-                                                label = "Court type", 
+                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Court type"), 
                                                 choices = c("Dot Map", "Heat Map"), 
                                                 selected = "Dot Map",
-                                                size = "sm", 
+                                                size = "normal", 
                                                 justified = T,
                                                 checkIcon = list(
                                                   yes = icon("square-check"),
@@ -281,7 +323,7 @@ ui <- fluidPage(
                               
                               #UI related to scatter (only shown if scatter is selected)
                               uiOutput("scatter_size_sliderTeam"),
-                             br(),br(),br(),br(),br()
+                             br(),br()
                               
                               , width = 2)),
                         mainPanel(
@@ -294,19 +336,19 @@ ui <- fluidPage(
                                      plotlyOutput("scatterplot_team",width = "100%")
                                    ),br(),br()
                             ),
-                            column(width=6,offset = 0, style='padding-left:0px; padding-right:1px; padding-top:0px; padding-bottom:5px',
+                            column(width=6,offset = 0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
                                    fluidRow(#style = "width:102.5%;",
                                      plotlyOutput("line_chart_team")),
                                     
                                    fluidRow(#style = "width:102.5%;",
                                      
-                                     column(width = 3,offset = 9, br(),
+                                     column(width = 4,offset = 8, br(),
                                             selectizeInput(inputId = "metricTeam", 
                                                            choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"), 
                                                            selected = "Three pointer rate", 
                                                            multiple = F, 
                                                            #selectize = F, 
-                                                           label = "Choose metric"
+                                                           label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric"),width = "125%"
                                             ),div(style = "margin-top:-40px"),
                                             ),
                                      plotOutput("barchartTeam",width = "100%", height = 600)
@@ -337,7 +379,7 @@ ui <- fluidPage(
                                                 selected = "Three pointer rate", 
                                                 multiple = F, 
                                                 #selectize = F, 
-                                                label = "Choose metric"
+                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric")
                                  ),div(style = "margin-top:-40px"),
                                  ),
                           plotOutput("matrixplotLeague",width = "100%", height = 600)
@@ -417,7 +459,7 @@ server <- function(input, output, session) {
     req(input$charttype == "Dot Map")
     
     sliderInput("scatter_size",
-                "Dot size",
+                div(style = paste0("font-size:",label_size_filters,"px"),"Dot size"),
                 min = 0,
                 max = 1,
                 ticks = F, 
@@ -464,7 +506,7 @@ server <- function(input, output, session) {
     req(input$charttype == "Dot Map")
     
     sliderInput("scatter_size_team",
-                "Dot size",
+                div(style = paste0("font-size:",label_size_filters,"px"),"Dot size"),
                 min = 0,
                 max = 1,
                 ticks = F, 
@@ -563,14 +605,16 @@ server <- function(input, output, session) {
     # browser()
     plot <- create_linechart(data=df_player, sel_season=input$seasons, 
                              source="line_trace")
-    plot <- plot %>% layout(
-      xaxis = list(title = list(text="Season", standoff=11)),
-      yaxis = list(title = list(text="Number of shots made", standoff=11)),
+    plot <-  plot %>% layout(
+      xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
+      yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
       legend = list(title = "Shot Type",
                     orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
-                    x = 0.5, y = -0.15),
-      title = "Average shot success per game",
+                    x = 0.5, y = -0.15,
+                    font = list(size=dropdown_size_filters)),
+      title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+      #margin = list(pad=-20),
       clickmode = "event+select"
     )
     plot
@@ -665,13 +709,15 @@ server <- function(input, output, session) {
         plot <- create_linechart(data=selected_data, sel_season=input$seasons,
                                  source="line_trace")
         plot <- plot %>% layout(
-          xaxis = list(title = F),
-          yaxis = list(title = "Number of Shots Made"),
+          xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
+          yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
           legend = list(title = "Shot Type",
                         orientation = "h",   # show entries horizontally
                         xanchor = "center",  # use center of legend as anchor
-                        x = 0.5),
-          title = "Average shot success per game",
+                        x = 0.5, y = -0.15,
+                        font = list(size=dropdown_size_filters)),
+          title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+          #margin = list(pad=-20),
           clickmode = "event+select"
         )
         plot
@@ -688,7 +734,8 @@ server <- function(input, output, session) {
                    legend=list('rgba(0,0,0,0)',
                                orientation = "h",   # show entries horizontally
                                xanchor = "center",  # use center of legend as anchor
-                               x = 0.5),
+                               x = 0.5,
+                               font = list(size=dropdown_size_filters)),
                    autosize = F, margin = list(
                      l = 0,
                      r = 0,
@@ -857,20 +904,25 @@ server <- function(input, output, session) {
       )
     fig <- fig %>%
       layout(
-        title = list(text="Shot attempts per game", x=0.52),
+        title = list(text="Shot attempts per game", x=0.52, font=list(size=label_size_filters)),
         polar = list(
           radialaxis = list(
             visible = T,
             range = 
               c(0,max(max(ceiling(max(radar_data2))), max(ceiling(compare_radar2 %>% dplyr::select(-c(season))))))
-          )
+          ),
+          angularaxis = list(tickfont = list(size = dropdown_size_filters))
         ),
         showlegend = T,
         legend = list(orientation = "h",   # show entries horizontally
                       xanchor = "center",  # use center of legend as anchor
-                      x = 0.5),
-        margin = list(t=90, pad=20)
+                      x = 0.5,
+                      font = list(size=dropdown_size_filters)),
+        margin = list(t=90, pad=-20)
       )%>%
+      layout(plot_bgcolor='rgb(254, 247, 234)') %>% 
+      layout(paper_bgcolor='transparent')%>%
+      layout(width = 1000)%>%
     config(displayModeBar = FALSE)
     
     fig
@@ -951,14 +1003,16 @@ server <- function(input, output, session) {
     # browser()
     plot <- create_linechart(data=df_team, sel_season=input$seasonsTeam, 
                              source="line_trace")
-    plot <- plot %>% layout(
-      xaxis = list(title = list(text="Season", standoff=11)),
-      yaxis = list(title = list(text="Number of shots made", standoff=11)),
+    plot <-  plot %>% layout(
+      xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
+      yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
       legend = list(title = "Shot Type",
                     orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
-                    x = 0.5, y = -0.15),
-      title = "Average shot success per game",
+                    x = 0.5, y = -0.15,
+                    font = list(size=dropdown_size_filters)),
+      title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+      #margin = list(pad=-20),
       clickmode = "event+select"
     )
     plot
@@ -1052,14 +1106,16 @@ server <- function(input, output, session) {
       output$line_chart_team <- renderPlotly({
         plot <- create_linechart(data=selected_data_team, sel_season=input$seasonsTeam,
                                  source="line_trace")
-        plot <- plot %>% layout(
-          xaxis = list(title = F),
-          yaxis = list(title = "Number of Shots Made"),
+        plot <-  plot %>% layout(
+          xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
+          yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
           legend = list(title = "Shot Type",
                         orientation = "h",   # show entries horizontally
                         xanchor = "center",  # use center of legend as anchor
-                        x = 0.5),
-          title = "Average shot success per game",
+                        x = 0.5, y = -0.15,
+                        font = list(size=dropdown_size_filters)),
+          title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+          #margin = list(pad=-20),
           clickmode = "event+select"
         )
         plot
@@ -1076,7 +1132,8 @@ server <- function(input, output, session) {
                    legend=list('rgba(0,0,0,0)',
                                orientation = "h",   # show entries horizontally
                                xanchor = "center",  # use center of legend as anchor
-                               x = 0.5),
+                               x = 0.5,
+                               font = list(size=dropdown_size_filters)),
                    autosize = F, margin = list(
                      l = 0,
                      r = 0,
@@ -1094,7 +1151,7 @@ server <- function(input, output, session) {
               # yaxis=list(range=list(-4,47.75)),
               plot_bgcolor='rgba(0,0,0,0)',
               paper_bgcolor='rgba(0,0,0,0)',
-              legend='rgba(300,200,255,0)',
+              legend=list('rgba(300,200,255,0)',font = list(size=dropdown_size_filters)),
               autosize = F, margin = list(
                 l = 50,
                 r = 50,
@@ -1264,8 +1321,9 @@ server <- function(input, output, session) {
                       metric==input$metricTeam) %>%
       group_by(team) %>%
       summarize(avg_metric_value = mean(matric_value)) %>%
-      mutate(choosen_team=ifelse(team==input$selectTeam, "1", "0"))%>% 
-      mutate(avg_metric_value_minus_mean = avg_metric_value - mean(avg_metric_value))
+      mutate(choosen_team=ifelse(team==input$selectTeam, "1", "0"),
+             mean_metric_league = mean(avg_metric_value))%>% 
+      mutate(avg_metric_value_minus_mean = avg_metric_value - mean_metric_league)
 
   })
   
@@ -1282,15 +1340,22 @@ server <- function(input, output, session) {
                     ))+
       geom_bar(stat="identity", alpha=.6) +
       coord_flip()+
-      scale_x_discrete(name ="",  position = "bottom")+
-      ggplot2::ggtitle(paste0(req(input$selectTeam)," compared to league average for the metric: ", input$metricTeam)) +
+      scale_x_discrete(name ="",  position = "top")+
+      ggplot2::ggtitle( paste0(input$metricTeam," for ", req(input$selectTeam)," compared to league average ", "(", round(data$mean_metric_league,2), "%)" ) ) +
       ggplot2::ylab("Point percentage differences to the mean")+
       scale_fill_manual( values = c( "1"="red", "0"="#6495ed" ), guide="none" ) +
-      ggthemes::theme_hc()+ ggthemes::scale_colour_hc()
+      ggthemes::theme_hc()+ ggthemes::scale_colour_hc()+
+      theme( axis.text = element_text(color="gray20", size=30),
+             axis.text.y  = element_text(size=dropdown_size_filters),
+             axis.text.x  = element_text(size=dropdown_size_filters),
+             legend.text = element_text(color="gray20", size=dropdown_size_filters),
+             axis.title = element_text(size=dropdown_size_filters),
+             plot.title = element_text(size=dropdown_size_filters)
+              )
   })
   
   
-  
+
 
 # LEAGUE Main panel -------------------------------------------------------
 
@@ -1357,13 +1422,14 @@ server <- function(input, output, session) {
     
     p <- ggplot2::ggplot(metric, aes(x = season, y = factor(team,levels = rev(sort(unique(team)))), fill = matric_value)) + 
       ggplot2::geom_tile(colour="white", size=1.5, stat="identity") + 
-      viridis::scale_fill_viridis(option="B") +
+      scale_fill_gradientn("",colours=pals::parula(100)) +
+      #viridis::scale_fill_viridis(option="B") +
        #scale_y_continuous(breaks=1:length(unique_teams), labels=unique_teams)+
       ggplot2::xlab("") + 
       ggplot2::ylab("") +
       ggplot2::ggtitle(paste0("Shot evolution for all teams (", req(input$matrixplot_league_metric), ")")) +
       ggplot2::theme(
-        plot.title = element_text(color="gray20",hjust=0,vjust=1, size=rel(2)),
+        plot.title = element_text(color="gray20",hjust=0,vjust=1, size=dropdown_size_filters),
         plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"),
         panel.border = element_rect(fill=NA,color="white", size=0.5, linetype="solid"),
@@ -1371,15 +1437,18 @@ server <- function(input, output, session) {
         panel.grid.minor = element_blank(),
         axis.line = element_blank(),
         axis.ticks = element_blank(), 
-        axis.text = element_text(color="gray20", size=rel(1.5)),
-        axis.text.y  = element_text(hjust=1),
-        legend.text = element_text(color="gray20", size=rel(1.3)),
+        axis.text = element_text(color="gray20", size=30),
+        axis.text.y  = element_text(hjust=1, size=dropdown_size_filters),
+        axis.text.x  = element_text(size=dropdown_size_filters),
+        axis.title = element_text(size=dropdown_size_filters),
+        legend.text = element_text(color="gray20", size=dropdown_size_filters),
         legend.background = element_rect(fill="white"),
         legend.position = "bottom",
         legend.title=element_blank()
-      )+ggplot2::guides(fill = guide_colourbar(barwidth = 50))
+      )+ggplot2::guides(fill = guide_colourbar(barwidth = 50, barheight = 2))
     
     p
+    
     
      
   }
