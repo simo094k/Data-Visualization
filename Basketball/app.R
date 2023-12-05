@@ -5,13 +5,15 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 library(viridis)
- library(gridExtra)
- library(dplyr)
+library(gridExtra)
+library(dplyr)
 
 source("court_plot.R")
 source("generate_scatter_plot.R")
 source("generate_heatmap_plot.R")
 source("generate_linechart_plot.R")
+source("generate_line_league.R")
+
 
 dict <<- list("0" = "two_pointer", "1" = "three_pointer", "2" = "two_pointer", "3" = "NULL")
 change_names <<- list("2-pointer" = "two_pointer",
@@ -382,9 +384,13 @@ ui <- fluidPage(
                                                 label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric")
                                  ),div(style = "margin-top:-40px"),
                                  ),
-                          plotOutput("matrixplotLeague",width = "100%", height = 600)
-                        
-                          
+                          plotOutput("matrixplotLeague",width = "100%", height = 600),
+                          br(),
+                          br(),
+                          br(),
+                          column(width = 12,
+                                 plotlyOutput("linechart_league",width = "100%", height = 600)
+                                 )
                           , width = 10)
                       ))
              
@@ -615,7 +621,8 @@ server <- function(input, output, session) {
                     font = list(size=dropdown_size_filters)),
       title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -658,7 +665,6 @@ server <- function(input, output, session) {
       
       # 2 = dunks
       # 1 = three_pointer
-      #browser()
       
       if(2 %in% curves & not(1 %in% curves)){  # we have all 2-pointers
         if(all(curves == 2)){  # dunks
@@ -718,7 +724,8 @@ server <- function(input, output, session) {
                         font = list(size=dropdown_size_filters)),
           title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
@@ -958,7 +965,7 @@ server <- function(input, output, session) {
       req(input$scatter_size_team)
       withProgress({
         create_scatter(df_team, court = plot_court(), 
-                       size = input$scatter_size_team, source="scatter_selected")%>%
+                       size = input$scatter_size_team, source="scatter_selected_team")%>%
           layout( clickmode = "event+select",
                   plot_bgcolor='rgba(0,0,0,0)',
                   paper_bgcolor='rgba(0,0,0,0)',
@@ -976,7 +983,7 @@ server <- function(input, output, session) {
       }, message = "Calculating...")
       
     }else if(input$charttypeTeam == "Heat Map"){
-      create_heatmap(df_team, court = plot_court(), source="scatter_selected") %>%
+      create_heatmap(df_team, court = plot_court(), source="scatter_selected_team") %>%
         layout(
           clickmode = "event+select",
           # xaxis = list(range=list(0,50)),
@@ -1002,7 +1009,7 @@ server <- function(input, output, session) {
     df_team <- df_teams()
     # browser()
     plot <- create_linechart(data=df_team, sel_season=input$seasonsTeam, 
-                             source="line_trace")
+                             source="line_trace_team")
     plot <-  plot %>% layout(
       xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
       yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
@@ -1013,7 +1020,8 @@ server <- function(input, output, session) {
                     font = list(size=dropdown_size_filters)),
       title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
-      clickmode = "event+select"
+      clickmode = "event+select",
+      showlegend = TRUE
     )
     plot
   })
@@ -1021,7 +1029,7 @@ server <- function(input, output, session) {
   # Capture selected data from the scatterplot
   scatter_selected_data_team <- reactive({
     df_team <- df_teams()
-    selected_data <- event_data("plotly_selected", source = "scatter_selected")
+    selected_data <- event_data("plotly_selected", source = "scatter_selected_team")
     trace <- unique(selected_data$curveNumber)
     trace <- ifelse(trace == 1, "Made", "Missed")
     
@@ -1039,7 +1047,7 @@ server <- function(input, output, session) {
   # Capture traces from lineplot
   line_selected_data_team <- reactive({
     df_team <- df_teams()
-    selected_data <- event_data("plotly_selected", source="line_trace")
+    selected_data <- event_data("plotly_selected", source="line_trace_team")
     trace <- unique(selected_data$customdata)
     #browser()
     if (!is.null(selected_data)) {
@@ -1101,11 +1109,12 @@ server <- function(input, output, session) {
   # Update the bar chart based on selected data from the scatterplot
   observe({
     selected_data_team <- common_selected_data_team()
+    #browser()
     if (!is.null(scatter_selected_data_team())) {
       #browser()
       output$line_chart_team <- renderPlotly({
         plot <- create_linechart(data=selected_data_team, sel_season=input$seasonsTeam,
-                                 source="line_trace")
+                                 source="line_trace_team")
         plot <-  plot %>% layout(
           xaxis = list(title = list(text="Season", standoff=8, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
           yaxis = list(title = list(text="Number of shots made", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
@@ -1116,16 +1125,17 @@ server <- function(input, output, session) {
                         font = list(size=dropdown_size_filters)),
           title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
-          clickmode = "event+select"
+          clickmode = "event+select",
+          showlegend = TRUE
         )
         plot
       })
     }
     else if (!is.null(line_selected_data_team())) {
-      output$scatterplotTeam <- renderPlotly({
-        if(input$charttypeTeam == "Scatter"){
+      output$scatterplot_team <- renderPlotly({
+        if(input$charttypeTeam == "Dot Map"){
           create_scatter(selected_data_team, court = plot_court(), 
-                         size = input$scatter_size_team, source="scatter_selected")%>%
+                         size = input$scatter_size_team, source="scatter_selected_team")%>%
             layout(clickmode = "event+select",
                    plot_bgcolor='rgba(0,0,0,0)',
                    paper_bgcolor='rgba(0,0,0,0)',
@@ -1144,7 +1154,7 @@ server <- function(input, output, session) {
           
         }else if(input$charttypeTeam == "Heat Map"){
           create_heatmap(selected_data_team, court = plot_court(), 
-                         source="scatter_selected") %>%
+                         source="scatter_selected_team") %>%
             layout(
               clickmode = "event+select",
               # xaxis = list(range=list(0,50)),
@@ -1454,6 +1464,22 @@ server <- function(input, output, session) {
   }
   )
   
+  
+  output$linechart_league <- plotly::renderPlotly({
+    plot <- create_leauge_line(data=line_league_data)
+    plot <- plot %>% layout(
+      xaxis = list(title = list(text="Season", standoff=11)),
+      yaxis = list(title = list(text="Indexed amount shots tried", standoff=11)),
+      legend = list(title = "Shot Type",
+                    orientation = "h",   # show entries horizontally
+                    xanchor = "center",  # use center of legend as anchor
+                    x = 0.5, y = -0.10),
+      title = "Development in average shots tried per game for the entire league",
+      clickmode = "event+select",
+      showlegend = TRUE
+    )
+    plot
+  })
   
   
   # Sorter alfabetisk
