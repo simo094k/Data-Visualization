@@ -126,7 +126,7 @@ ui <- fluidPage(
                                           choices = all_nba_data %>% 
                                             dplyr::select(quarter)%>%
                                             unique(), 
-                                          selected = "1st quarter", 
+                                          selected = c("1st quarter", "2nd quarter", "3rd quarter", "4th quarter", "Overtime"), 
                                           multiple = T, 
                                           #selectize = F, 
                                           label = div(style = paste0("font-size:",label_size_filters,"px"),"Game period"),
@@ -264,7 +264,7 @@ ui <- fluidPage(
                                           choices = all_nba_data %>% 
                                             dplyr::select(quarter)%>%
                                             unique(), 
-                                          selected = "1st quarter", 
+                                          selected = c("1st quarter", "2nd quarter", "3rd quarter", "4th quarter", "Overtime"), 
                                           multiple = T, 
                                           #selectize = F, 
                                           label = div(style = paste0("font-size:",label_size_filters,"px"),"Game period"),
@@ -438,9 +438,10 @@ server <- function(input, output, session) {
   })
 
   playerRecentSeason <- reactive({
+    #browser()
     all_nba_data%>%
       dplyr::filter(player==input$selectPlayer) %>% 
-      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(1)
+      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(3)%>%as.vector()%>%unlist()
   })
   
   playerSeasons <- reactive({
@@ -504,6 +505,29 @@ server <- function(input, output, session) {
       dplyr::filter(team_name==input$selectTeam) %>% 
       dplyr::select(distance)%>%min()
   })
+  
+  teamRecentSeason <- reactive({
+    #browser()
+    all_nba_data%>%
+      dplyr::filter(team_name==input$selectTeam) %>% 
+      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(3)%>%as.vector()%>%unlist()
+  })
+  
+  teamSeasons <- reactive({
+    all_nba_data %>% 
+      dplyr::filter(team_name==input$selectTeam) %>% 
+      dplyr::select(season)%>%
+      unique()%>%arrange(desc(season))
+  })
+  
+
+  
+  observe(updatePickerInput(session,
+                            inputId = "seasonsTeam",
+                            choices = teamSeasons(),
+                            selected = teamRecentSeason() )
+  )
+  
   
   observe(updateSliderInput(session, 
                             inputId = "distanceToRimTeam", 
