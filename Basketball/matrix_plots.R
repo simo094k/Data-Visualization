@@ -45,7 +45,7 @@ final_df <-
 
 ggplot(final_df, aes_string("season", "team", fill = "threePointerSuccess")) + 
   geom_tile(colour="white", size=1.5, stat="identity") + 
-  scale_fill_viridis(option="B") +
+  scale_fill_gradientn("", colours=pals::parula(100)) +
   # scale_y_discrete(breaks=1:length(unique_teams), labels=unique_teams)+
   xlab("") + 
   ylab("") +
@@ -65,8 +65,7 @@ ggplot(final_df, aes_string("season", "team", fill = "threePointerSuccess")) +
     legend.background = element_rect(fill="white"),
     legend.position = "bottom",
     legend.title=element_blank()
-  )+guides(fill = guide_colourbar(barwidth = 50))
-
+  )+guides(fill = guide_colourbar(barwidth = 50, barheight = 2))
 # Sorter alfabetisk
 # Skriv værdi i brackets, men vælg font/size mm. nøjsomt (tænk på luminance)
 # Lav legend bredere
