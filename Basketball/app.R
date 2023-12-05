@@ -375,22 +375,25 @@ ui <- fluidPage(
                               
                               , width = 2)),
                         mainPanel(
-                          column(width = 2,offset = 10,
-                                 selectizeInput(inputId = "matrixplot_league_metric", 
-                                                choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"), 
-                                                selected = "Three pointer rate", 
-                                                multiple = F, 
-                                                #selectize = F, 
-                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric")
-                                 ),div(style = "margin-top:-40px"),
-                                 ),
-                          plotOutput("matrixplotLeague",width = "100%", height = 600),
-                          br(),
-                          br(),
-                          br(),
                           column(width = 12,
-                                 plotlyOutput("linechart_league",width = "100%", height = 600)
-                                 )
+                                 plotlyOutput("linechart_league",width = "100%", height = 450)
+                          )
+                          ,
+                          br(),
+                          br(),
+                          br(),
+                         #col
+                         column(width = 2,offset = 10,
+                                selectizeInput(inputId = "matrixplot_league_metric", 
+                                               choices = c("Dunk rate", "Two pointer rate", "Three pointer rate", "Two pointer success rate","Three pointer success rate"), 
+                                               selected = "Three pointer rate", 
+                                               multiple = F, 
+                                               #selectize = F, 
+                                               label = div(style = paste0("font-size:",label_size_filters,"px"),"Choose metric")
+                                ),div(style = "margin-top:-40px"),
+                         ),
+                         plotOutput("matrixplotLeague",width = "100%", height = 750)
+                         
                           , width = 10)
                       ))
              
@@ -1348,7 +1351,10 @@ server <- function(input, output, session) {
     ggplot2::ggplot(data =data, 
                     mapping = aes(x = forcats::fct_reorder(team, avg_metric_value_minus_mean), y = avg_metric_value_minus_mean, fill=choosen_team#, text = paste0(Area, "\n", Time, ": ", Value)
                     ))+
-      geom_bar(stat="identity", alpha=.6) +
+      ggplot2::geom_bar(stat="identity", alpha=.6, color="gray20") +
+      geom_text(aes(y = data$avg_metric_value_minus_mean + 0.5 * sign(data$avg_metric_value_minus_mean), label = round(data$avg_metric_value_minus_mean,2)), 
+                position = position_dodge(width = 0.9), 
+                size = 4.5)+
       coord_flip()+
       scale_x_discrete(name ="",  position = "top")+
       ggplot2::ggtitle( paste0(input$metricTeam," for ", req(input$selectTeam)," compared to league average ", "(", round(data$mean_metric_league,2), "%)" ) ) +
@@ -1365,7 +1371,6 @@ server <- function(input, output, session) {
   })
   
   
-
 
 # LEAGUE Main panel -------------------------------------------------------
 
@@ -1466,21 +1471,69 @@ server <- function(input, output, session) {
   
   
   output$linechart_league <- plotly::renderPlotly({
+    
+    three_pointer <- list(
+      xref = 'paper',
+      x = 0.955,
+      y = line_league_data[["three_pointer"]]%>%tail(1),
+      xanchor = 'left',
+      yanchor = 'bottom',
+      text = paste('Three pointer'),
+      font = list(family = 'Arial',
+                  size = 16,
+                  color = 'rgba(67,67,67,1)'),
+      showarrow = FALSE)
+    
+    two_pointer <- list(
+      xref = 'paper',
+      x = 0.955,
+      y = line_league_data[["two_pointer"]]%>%tail(1),
+      xanchor = 'left',
+      yanchor = 'bottom',
+      text = paste('Two pointer'),
+      font = list(family = 'Arial',
+                  size = 16,
+                  color = 'rgba(67,67,67,1)'),
+      showarrow = FALSE)
+    
+    dunks <- list(
+      xref = 'paper',
+      x = 0.955,
+      y = line_league_data[["dunks"]]%>%tail(1),
+      xanchor = 'left',
+      yanchor = 'bottom',
+      text = paste('Dunks'),
+      font = list(family = 'Arial',
+                  size = 16,
+                  color = 'rgba(67,67,67,1)'),
+      showarrow = FALSE)
+    
+    
+    
     plot <- create_leauge_line(data=line_league_data)
-    plot <- plot %>% layout(
-      xaxis = list(title = list(text="Season", standoff=11)),
-      yaxis = list(title = list(text="Indexed amount shots tried", standoff=11)),
+    plot <- plot %>% 
+      layout(
+      xaxis = list(title = list(text="Season", standoff=11, font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
+      yaxis = list(title = list(text="Indexed amount shots tried", standoff=11,font = list(size=dropdown_size_filters)),tickfont = list(size = dropdown_size_filters)),
       legend = list(title = "Shot Type",
                     orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
-                    x = 0.5, y = -0.10),
-      title = "Development in average shots tried per game for the entire league",
+                    x = 0.5, y = -0.10,
+                    font = list(size=dropdown_size_filters)),
+      title = list(text="Development in average shots tried per game for the entire league", y = 0.9, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       clickmode = "event+select",
-      showlegend = TRUE
-    )
+      showlegend = F
+    )%>%style(hoverinfo = 'none')%>%
+      config(displayModeBar = FALSE)
+    
+    plot <- plot%>%layout(annotations = three_pointer) 
+    plot <- plot%>%layout(annotations = two_pointer) 
+    plot <- plot%>%layout(annotations = dunks) 
     plot
   })
   
+  
+
   
   # Sorter alfabetisk
   # Skriv værdi i brackets, men vælg font/size mm. nøjsomt (tænk på luminance)

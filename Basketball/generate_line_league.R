@@ -1,27 +1,65 @@
 create_leauge_line <- function(data, source=NULL){
   df_reshaped <- data
   
+  
   plot <- plot_ly(df_reshaped, x = ~season, y = df_reshaped[["two_pointer"]], 
-                  type = "scatter", mode = "lines+markers", name = "Two pointer",
+                  type = "scatter", mode = "lines+markers+text", name = "Two pointer",
+                  text = rep(c(""),12),
+                  #textposistion = "top center",
                   line = list(dash = "dash", color = c("#7570b3")), connectgaps = TRUE,
-                  showlegend = TRUE, source = source, 
-                  marker = list(color = c("#7570b3")),
-                  text = paste("Average amount of two point shots", "<br>", "tried per game"))
+                  showlegend = F, source = source, 
+                  marker = list(color = c("#7570b3"))#,
+                  #text = paste("Average amount of two point shots", "<br>", "tried per game")
+                  )
   
   plot <- plot %>% add_trace(y = df_reshaped[["three_pointer"]], name = "Three pointer", 
                              line = list(dash = "dash", color = c("#d95f02")), connectgaps = T,
                              showlegend = is.numeric(df_reshaped[["three_pointer"]]), 
                              marker = list(color = c("#d95f02")),
-                             text = paste("Average amount of three point shots", "<br>", "tried per game"))
+                             #text = paste("Average amount of three point shots", "<br>", "tried per game")
+                             text = round(df_reshaped[["three_pointer"]],1),
+                             textposition = "top center"
+                             
+                             )
   
   plot <- plot %>% add_trace(y = df_reshaped[["dunks"]], name = "Dunks", 
                              line = list(dash = "dash", color = c("#1b9e77")), connectgaps = T,
                              showlegend = is.numeric(df_reshaped[["dunks"]]), 
                              marker = list(color = c("#1b9e77")),
-                             text = paste("Average amount of dunks", "<br>", "tried per game"))
+                             #text = paste("Average amount of dunks", "<br>", "tried per game")
+                             text=c("",round(df_reshaped[["dunks"]]%>%tail(11),1)),
+                             textposition = "top center"
+                             )
+  
+  plot <- plot %>% add_trace(y = df_reshaped[["two_pointer"]], name = "Two pointer", 
+                             line = list(dash = "dash", color = c("#7570b3")), connectgaps = T,
+                             showlegend = is.numeric(df_reshaped[["two_pointer"]]), 
+                             marker = list(color = c("#7570b3")),
+                             #text = paste("Average amount of dunks", "<br>", "tried per game")
+                             text=c("","","",round(df_reshaped[["two_pointer"]]%>%tail(9),1)),
+                             textposition = "top center"
+  )
+  
+  
+  plot<-plot%>%add_text(textposition = "top",textfont = list(family = 'Arial',
+                                                         size = 18,
+                                                         color = 'rgba(67,67,67,1)'))
   
   return(plot)
 }
+
+
+
+# ggplot2::ggplot(line_league_data, aes(x = season))+
+#   ggplot2::geom_line(aes(y=two_pointer), linetype = "dashed", color="#7570b3", group=1)+
+#   geom_point(aes(y=two_pointer), color="#7570b3", group=1)+
+#   ggplot2::geom_line(aes(y=three_pointer), linetype = "dashed", color="#d95f02", group=2)+
+#   geom_point(aes(y=three_pointer), color="#d95f02", group=2)+
+#   ggplot2::geom_line(aes(y=dunks), linetype = "dashed", color="#1b9e77", group=1)+
+#   geom_point(aes(y=dunks), color="#1b9e77", group=1)+
+#   geom_text(y=line_league_data$dunks,
+#     mapping = aes(label = round(dunks)), nudge_y = -0.1
+#   )
 
 
 # ---- FOR ONLY MADE SHOTS:

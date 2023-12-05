@@ -1,6 +1,6 @@
 library(tidyverse)
 library(plotly)
-load("data/basketball.RData")
+#load("data/basketball.RData")
 
 #all_nba_data2 <- all_nba_data
 #df_two_first <- all_nba_data %>% filter(season %in% c("2009/10", "2010/11"))
