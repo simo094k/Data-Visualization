@@ -1454,11 +1454,8 @@ server <- function(input, output, session) {
   })
   
   output$matrixplotLeague <- renderPlot({
-   # browser()
-    
+
     metric <- matrixplot_league_metric()
-    browser()
-     
     
     p <- ggplot2::ggplot(metric, aes(x = season, y = factor(team,levels = rev(sort(unique(team)))), fill = matric_value)) + 
       ggplot2::geom_tile(colour="white", size=1.5, stat="identity") + 
