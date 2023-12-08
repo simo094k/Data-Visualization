@@ -38,7 +38,7 @@ create_heatmap <- function(df_player, court, court_theme=court_themes$light, sou
       theme(title = element_text(size=30),
         legend.background = element_blank(),
         legend.text = element_text(size = 18) 
-      ),width = 1025, height = 1050, source=source)%>%
+      ),width = 1025, height = 1050, source=source,tooltip = F)%>%
     layout(
       legend = list(
       bgcolor = 'rgba(0,0,0,0)'

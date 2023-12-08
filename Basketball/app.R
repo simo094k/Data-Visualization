@@ -1381,7 +1381,7 @@ server <- function(input, output, session) {
                 size = 4.5)+
       coord_flip()+
       scale_x_discrete(name ="",  position = "top")+
-      ggplot2::ggtitle( paste0(input$metricTeam," for ", req(input$selectTeam)," compared to league average ", "(", round(data$mean_metric_league,2), "%)" ) ) +
+      ggplot2::ggtitle( paste0(input$metricTeam," for ", "all teams"," compared to league average ", "(", round(data$mean_metric_league,2), "%)" ) ) +
       ggplot2::ylab("Point percentage differences to the mean")+
       scale_fill_manual( values = c( "1"="red", "0"="#6495ed" ), guide="none" ) +
       ggthemes::theme_hc()+ ggthemes::scale_colour_hc()+
@@ -1542,7 +1542,7 @@ server <- function(input, output, session) {
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5, y = -0.10,
                     font = list(size=dropdown_size_filters)),
-      title = list(text="Development in average shots tried per game for the entire league", y = 0.9, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+      title = list(text="Development in average shots tried per game for the entire league", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       clickmode = "event+select",
       showlegend = F
     )%>%style(hoverinfo = 'none')%>%

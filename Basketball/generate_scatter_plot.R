@@ -5,7 +5,10 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
         data=df_player,
         aes(x = shotX, 
             y = shotY,
-            color = made_factor
+            color = made_factor,
+            text=map(paste('<b>Season:</b>', season, '<br>', 
+                           '<b>Quarter:</b>', quarter, '<br>', 
+                           '<b>Game status:</b>', status), HTML)
             ), 
         alpha = alpha,
         size = size) + # c("#1b9e77", "#d95f02")
@@ -14,7 +17,7 @@ create_scatter <- function(df_player, court, alpha = 0.8, size = 0.2, source=NUL
             legend.position = c(.95, .95),
             legend.justification = c("center", "bottom"),
             legend.box.just = "center",
-            legend.margin = margin(6, 6, 6, 6)) , source = source, width = 1025, height = 1050)%>%
+            legend.margin = margin(6, 6, 6, 6)) , source = source, width = 1025, height = 1050,tooltip = "text")%>%
     layout(
            legend = list(
       'rgba(0,0,0,0)', 
