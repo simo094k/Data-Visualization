@@ -536,7 +536,7 @@ server <- function(input, output, session) {
                             value =c(teamInputMin(), teamInputMax()) ))
   
   output$scatter_size_sliderTeam = renderUI({
-    req(input$charttype == "Dot Map")
+    req(input$charttypeTeam == "Dot Map")
     
     sliderInput("scatter_size_team",
                 div(style = paste0("font-size:",label_size_filters,"px"),"Dot size"),
