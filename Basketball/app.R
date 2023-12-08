@@ -646,7 +646,7 @@ server <- function(input, output, session) {
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5, y = -0.15,
                     font = list(size=dropdown_size_filters)),
-      title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+      title = list(text="Average shot successes per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
       clickmode = "event+select",
       showlegend = TRUE
@@ -749,7 +749,7 @@ server <- function(input, output, session) {
                         xanchor = "center",  # use center of legend as anchor
                         x = 0.5, y = -0.15,
                         font = list(size=dropdown_size_filters)),
-          title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+          title = list(text="Average shot successes per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
           clickmode = "event+select",
           showlegend = TRUE
@@ -938,7 +938,7 @@ server <- function(input, output, session) {
       )
     fig <- fig %>%
       layout(
-        title = list(text="Shot attempts per game", x=0.52, font=list(size=label_size_filters)),
+        title = list(text="Average shot attempts per game", x=0.52, font=list(size=label_size_filters)),
         polar = list(
           radialaxis = list(
             visible = T,
@@ -1045,7 +1045,7 @@ server <- function(input, output, session) {
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5, y = -0.15,
                     font = list(size=dropdown_size_filters)),
-      title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+      title = list(text="Average shot successes per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
       #margin = list(pad=-20),
       clickmode = "event+select",
       showlegend = TRUE
@@ -1150,7 +1150,7 @@ server <- function(input, output, session) {
                         xanchor = "center",  # use center of legend as anchor
                         x = 0.5, y = -0.15,
                         font = list(size=dropdown_size_filters)),
-          title = list(text="Average shot success per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
+          title = list(text="Average shot successes per game", y = 0.98, x = 0.5, xanchor = 'center', yanchor =  'top',  font = list(size=label_size_filters)),
           #margin = list(pad=-20),
           clickmode = "event+select",
           showlegend = TRUE
@@ -1454,10 +1454,8 @@ server <- function(input, output, session) {
   })
   
   output$matrixplotLeague <- renderPlot({
-   # browser()
-    
+
     metric <- matrixplot_league_metric()
-     
     
     p <- ggplot2::ggplot(metric, aes(x = season, y = factor(team,levels = rev(sort(unique(team)))), fill = matric_value)) + 
       ggplot2::geom_tile(colour="white", size=1.5, stat="identity") + 
