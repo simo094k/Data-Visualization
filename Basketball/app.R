@@ -74,7 +74,7 @@ ui <- fluidPage(
              .irs--shiny .irs-min, .irs--shiny .irs-max {font-size: ",label_size_filters,"px;}
              .irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single {font-size: ",label_size_filters-4,"px;}
              .irs--shiny .irs-handle {top:20px; width:17px: height: 17px;}
-             .btn {font-size: 20px}
+             .btn {font-size: 18px}
               .pretty .state label, .pretty .state label {font-size:larger}
               .col-sm-10 {width: 87.5%}
               .fa, .fa-brands, .fa-classic, .fa-regular, .fa-sharp, .fa-solid, .fab, .far, .fas {line-height:0.9}")),
@@ -109,7 +109,9 @@ ui <- fluidPage(
                               pickerInput(inputId = "seasons", 
                                           choices = all_nba_data %>% 
                                             dplyr::select(season)%>%
-                                            unique()%>%arrange(desc(season)), 
+                                            dplyr::filter(season!="2009/10")%>%
+                                            unique()%>%
+                                            arrange(desc(season)), 
                                           selected = "2020/21", 
                                           multiple = T, 
                                           #selectize = F, 
@@ -175,7 +177,7 @@ ui <- fluidPage(
                               # ),
                               
                               radioGroupButtons(inputId = "charttype",
-                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Court type"), 
+                                                label = div(style = paste0("font-size:",label_size_filters-5,"px"),"Court type"), 
                                                 choices = c("Dot Map", "Heat Map"), 
                                                 selected = "Dot Map",
                                                 size = "normal", 
@@ -237,8 +239,9 @@ ui <- fluidPage(
                               selectInput(inputId = "selectTeam", 
                                           choices = all_nba_data %>% 
                                             dplyr::filter(!is.na(pictures_team)) %>% 
-                                            dplyr::select("Team name" = team_name)%>%unique()%>%
-                                            dplyr::arrange("Team name"), 
+                                            dplyr::select("Team name" = team_name)%>%
+                                            unique()%>%
+                                            dplyr::arrange(`Team name`), 
                                           selected = "Boston Celtics", 
                                           label = NULL, 
                                           selectize = T),
@@ -247,7 +250,9 @@ ui <- fluidPage(
                               pickerInput(inputId = "seasonsTeam", 
                                           choices = all_nba_data %>% 
                                             dplyr::select(season)%>%
-                                            unique()%>%arrange(desc(season)), 
+                                            dplyr::filter(season!="2009/10")%>%
+                                            unique()%>%
+                                            arrange(desc(season)), 
                                           selected = "2020/21", 
                                           multiple = T, 
                                           #selectize = F, 
@@ -312,7 +317,7 @@ ui <- fluidPage(
                               # ),
                               
                               radioGroupButtons(inputId = "charttypeTeam",
-                                                label = div(style = paste0("font-size:",label_size_filters,"px"),"Court type"), 
+                                                label = div(style = paste0("font-size:",label_size_filters-4,"px"),"Court type"), 
                                                 choices = c("Dot Map", "Heat Map"), 
                                                 selected = "Dot Map",
                                                 size = "normal", 
@@ -441,13 +446,14 @@ server <- function(input, output, session) {
     #browser()
     all_nba_data%>%
       dplyr::filter(player==input$selectPlayer) %>% 
-      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(3)%>%as.vector()%>%unlist()
+      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(10)%>%as.vector()%>%unlist()
   })
   
   playerSeasons <- reactive({
     all_nba_data %>% 
       dplyr::filter(player==input$selectPlayer) %>% 
       dplyr::select(season)%>%
+      dplyr::filter(season!="2009/10")%>%
       unique()%>%arrange(desc(season))
   })
   
@@ -510,13 +516,14 @@ server <- function(input, output, session) {
     #browser()
     all_nba_data%>%
       dplyr::filter(team_name==input$selectTeam) %>% 
-      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(3)%>%as.vector()%>%unlist()
+      dplyr::select(season)%>%unique()%>%dplyr::arrange(desc(season))%>%head(10)%>%as.vector()%>%unlist()
   })
   
   teamSeasons <- reactive({
     all_nba_data %>% 
       dplyr::filter(team_name==input$selectTeam) %>% 
       dplyr::select(season)%>%
+      dplyr::filter(season!="2009/10")%>%
       unique()%>%arrange(desc(season))
   })
   
@@ -525,7 +532,8 @@ server <- function(input, output, session) {
   observe(updatePickerInput(session,
                             inputId = "seasonsTeam",
                             choices = teamSeasons(),
-                            selected = teamRecentSeason() )
+                            selected = teamRecentSeason() 
+                            )
   )
   
   
@@ -536,7 +544,7 @@ server <- function(input, output, session) {
                             value =c(teamInputMin(), teamInputMax()) ))
   
   output$scatter_size_sliderTeam = renderUI({
-    req(input$charttype == "Dot Map")
+    req(input$charttypeTeam == "Dot Map")
     
     sliderInput("scatter_size_team",
                 div(style = paste0("font-size:",label_size_filters,"px"),"Dot size"),
@@ -573,13 +581,16 @@ server <- function(input, output, session) {
   
   
   df_players <- reactive({
-    all_nba_data %>%
-      dplyr::filter(player == input$selectPlayer &
-                      season %in% input$seasons &
-                      quarter %in% input$quarters &
-                      time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
-                      distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
-                      status %in% input$gamestatus) 
+
+      all_nba_data %>%
+        dplyr::filter(player == input$selectPlayer &
+                        season %in% input$seasons &
+                        quarter %in% input$quarters &
+                        time_remaining >= input$timeRemaining[1] & time_remaining <= input$timeRemaining[2] &
+                        distance >= input$distanceToRim[1] & distance <= input$distanceToRim[2] &
+                        status %in% input$gamestatus) 
+      
+
   })
   
   
@@ -587,6 +598,13 @@ server <- function(input, output, session) {
   # Create the scatterplot
   output$scatterplot <- renderPlotly({
     df_player <- df_players()
+    
+    if(nrow(df_player)>7000){
+      df_player<-df_player%>%dplyr::slice_sample(n = 7000)
+    }else{
+      df_player<-df_player
+    }
+    
     # browser()
     if(input$charttype == "Dot Map"){
       # browser()
@@ -657,6 +675,12 @@ server <- function(input, output, session) {
   # Capture selected data from the scatterplot
   scatter_selected_data <- reactive({
     df_player <- df_players()
+    
+    # if(nrow(df_player)>7000){
+    #   df_player<-df_player%>%dplyr::slice_sample(n = 7000)
+    # }else{
+    #   df_player<-df_player
+    # }
     selected_data <- event_data("plotly_selected", source = "scatter_selected")
     trace <- unique(selected_data$curveNumber)
     trace <- ifelse(trace == 1, "Made", "Missed")
@@ -760,6 +784,11 @@ server <- function(input, output, session) {
     else if (!is.null(line_selected_data())) {
       output$scatterplot <- renderPlotly({
         if(input$charttype == "Dot Map"){
+          # if(nrow(selected_data)>7000){
+          #   selected_data<-selected_data%>%dplyr::slice_sample(n = 7000)
+          # }else{
+          #   selected_data<-selected_data
+          # }
           create_scatter(selected_data, court = plot_court(), 
                          size = input$scatter_size, source="scatter_selected")%>%
             layout(clickmode = "event+select",
@@ -979,6 +1008,7 @@ server <- function(input, output, session) {
                       time_remaining >= input$timeRemainingTeam[1] & time_remaining <= input$timeRemainingTeam[2] &
                       distance >= input$distanceToRimTeam[1] & distance <= input$distanceToRimTeam[2] &
                       status %in% input$gamestatusTeam) 
+    
   })
   
   
@@ -986,6 +1016,11 @@ server <- function(input, output, session) {
   # Create the scatterplot
   output$scatterplot_team <- renderPlotly({
     df_team <- df_teams()
+    if(nrow(df_team)>7000){
+      df_team<-df_team%>%dplyr::slice_sample(n = 7000)
+    }else{
+      df_team<-df_team
+    }
     # browser()
     if(input$charttypeTeam == "Dot Map"){
       # browser()
@@ -1056,6 +1091,7 @@ server <- function(input, output, session) {
   # Capture selected data from the scatterplot
   scatter_selected_data_team <- reactive({
     df_team <- df_teams()
+    
     selected_data <- event_data("plotly_selected", source = "scatter_selected_team")
     trace <- unique(selected_data$curveNumber)
     trace <- ifelse(trace == 1, "Made", "Missed")
@@ -1161,6 +1197,12 @@ server <- function(input, output, session) {
     else if (!is.null(line_selected_data_team())) {
       output$scatterplot_team <- renderPlotly({
         if(input$charttypeTeam == "Dot Map"){
+          
+          # if(nrow(selected_data_team)>7000){
+          #   selected_data_team<-selected_data_team%>%dplyr::slice_sample(n = 7000)
+          # }else{
+          #   selected_data_team<-selected_data_team
+          # }
           create_scatter(selected_data_team, court = plot_court(), 
                          size = input$scatter_size_team, source="scatter_selected_team")%>%
             layout(clickmode = "event+select",
@@ -1375,7 +1417,7 @@ server <- function(input, output, session) {
     ggplot2::ggplot(data =data, 
                     mapping = aes(x = forcats::fct_reorder(team, avg_metric_value_minus_mean), y = avg_metric_value_minus_mean, fill=choosen_team#, text = paste0(Area, "\n", Time, ": ", Value)
                     ))+
-      ggplot2::geom_bar(stat="identity", alpha=.6, color="gray20") +
+      ggplot2::geom_bar(stat="identity", alpha=.6, color="gray20",width=0.6, position = position_dodge2()) +
       geom_text(aes(y = data$avg_metric_value_minus_mean + 0.5 * sign(data$avg_metric_value_minus_mean), label = round(data$avg_metric_value_minus_mean,2)), 
                 position = position_dodge(width = 0.9), 
                 size = 4.5)+
