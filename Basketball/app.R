@@ -1418,7 +1418,9 @@ server <- function(input, output, session) {
                     mapping = aes(x = forcats::fct_reorder(team, avg_metric_value_minus_mean), y = avg_metric_value_minus_mean, fill=choosen_team#, text = paste0(Area, "\n", Time, ": ", Value)
                     ))+
       ggplot2::geom_bar(stat="identity", alpha=.6, color="gray20",width=0.6, position = position_dodge2()) +
-      geom_text(aes(y = data$avg_metric_value_minus_mean + 0.5 * sign(data$avg_metric_value_minus_mean), label = round(data$avg_metric_value_minus_mean,2)), 
+      geom_text(aes(hjust = ifelse(data$avg_metric_value_minus_mean < 0, 1.2, -0.2),
+                    vjust = 0.5,#y = data$avg_metric_value_minus_mean + 0.3 * sign(data$avg_metric_value_minus_mean), 
+                    label = round(data$avg_metric_value_minus_mean,2)), 
                 position = position_dodge(width = 0.9), 
                 size = 4.5)+
       coord_flip()+
